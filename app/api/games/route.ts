@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateMap } from '@/lib/mapGenerator'
 import { createGame, getGame, getTiles, upsertTiles, getPlayers } from '@/lib/db'
-import { initializeGame } from '@/lib/gameLogic'
 
 export async function POST(request: NextRequest) {
   try {
