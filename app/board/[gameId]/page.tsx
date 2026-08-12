@@ -167,10 +167,6 @@ export default function Board() {
     }
   }
 
-  const fetchGameStateWithName = async (name: string) => {
-    await fetchGameState()
-  }
-
   const renderMap = () => {
     const canvas = canvasRef.current
     if (!canvas || !currentPlayer) return
