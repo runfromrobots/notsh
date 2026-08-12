@@ -37,55 +37,60 @@ export interface Player {
   x: number
   y: number
   carrying: boolean // is carrying a log
-  logs: number // total logs contributed to SOS
-  status: 'alive' | 'eliminated' | 'rescued' | 'left_behind'
-  lastMove: number // timestamp
-  revealBudget: number // remaining moves this turn
+  logsPlaced: number // logs contributed to shared SOS
+  status: 'alive' | 'eliminated' | 'rescued'
+  lastMoveTime: number // timestamp of last move
+  turnsUsedToday: number // how many of 12 turns used this day
 }
 
 // Game state types
 export enum GameStatus {
-  Waiting = 'waiting',
-  Active = 'active',
-  Completed = 'completed',
+  Waiting = 'waiting', // waiting for second player to join
+  Active = 'active', // both players present, game in progress
+  Paused = 'paused', // waiting for player to make their move
+  Rescued = 'rescued', // player(s) rescued, game over
+  Abandoned = 'abandoned', // player left
 }
 
 export interface GameState {
   id: string
+  code: string // shareable game code (6 chars)
   status: GameStatus
-  currentTurn: number
+  currentPlayerFaction: Faction // whose turn it is
+  dayNumber: number
+  currentTurnInDay: number // 0-11 of 12
   createdAt: number
   updatedAt: number
   mapSeed: number
-  pirateSOS: { x: number; y: number }[] // log positions for pirate win
-  navySOS: { x: number; y: number }[] // log positions for navy win
-  rescueTriggered: boolean
-  rescueTriggerTime?: number
-  winnerFaction?: Faction
+  sosPositions: Array<{ x: number; y: number }> // shared SOS log positions
+  rescuedPlayers: string[] // player IDs who escaped
+  isLocked: boolean // game locked when first move is made or manually locked
 }
 
 // Move types
 export enum MoveType {
-  Reveal = 'reveal',
-  Backtrack = 'backtrack',
+  Move = 'move', // move to adjacent tile
+  PlaceLog = 'place_log', // place log at current tile (if on beach)
+  Wait = 'wait', // skip turn
 }
 
 export interface Move {
   id: string
   playerId: string
   gameId: string
-  turnNumber: number
+  dayNumber: number
+  turnInDay: number // 0-11
   moveType: MoveType
   x: number
   y: number
   timestamp: number
 }
 
-// Encounter types
-export enum EncounterOutcome {
-  Elimination = 'elimination',
-  FactionSwitch = 'faction_switch',
-  Standoff = 'standoff',
+// Encounter/RPS types
+export enum RPSChoice {
+  Rock = 'rock',
+  Paper = 'paper',
+  Scissors = 'scissors',
 }
 
 export interface Encounter {
@@ -93,7 +98,10 @@ export interface Encounter {
   gameId: string
   playerId1: string
   playerId2: string
-  outcome: EncounterOutcome
-  winner?: string
+  choice1: RPSChoice
+  choice2: RPSChoice
+  winnerId: string // who won RPS
+  loserId: string
+  loserChoice: 'death' | 'switch_faction' // what loser chose
   timestamp: number
 }

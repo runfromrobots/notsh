@@ -1,19 +1,32 @@
 import { supabase } from './supabase'
-import { GameState, Player, Tile, Move, Encounter } from './types'
+import { GameState, Player, Tile, Move, Encounter, Faction } from './types'
+
+// Helper: Generate game code (6 char alphanumeric)
+function generateGameCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let code = ''
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return code
+}
 
 // Games
-export async function createGame(mapSeed: number): Promise<GameState | null> {
+export async function createGame(mapSeed: number, code?: string): Promise<GameState | null> {
   try {
+    const gameCode = code || generateGameCode()
     const { data, error } = await supabase
       .from('games')
       .insert([
         {
+          code: gameCode,
           status: 'waiting',
-          current_turn: 0,
+          current_player_faction: null,
+          day_number: 1,
+          current_turn_in_day: 0,
           map_seed: mapSeed,
-          pirate_sos: [],
-          navy_sos: [],
-          rescue_triggered: false,
+          sos_positions: [],
+          rescued_players: [],
         },
       ])
       .select()
@@ -43,14 +56,37 @@ export async function getGame(gameId: string): Promise<GameState | null> {
   }
 }
 
+export async function getGameByCode(code: string): Promise<GameState | null> {
+  try {
+    const { data, error } = await supabase
+      .from('games')
+      .select('*')
+      .eq('code', code)
+      .single()
+
+    if (error) throw error
+    return data as GameState
+  } catch (error) {
+    console.error('Failed to get game by code:', error)
+    return null
+  }
+}
+
 export async function updateGame(gameId: string, updates: Partial<GameState>): Promise<boolean> {
   try {
+    const dbUpdates: any = {}
+
+    // Map TypeScript field names to snake_case for Supabase
+    Object.entries(updates).forEach(([key, value]) => {
+      const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+      dbUpdates[snakeKey] = value
+    })
+
+    dbUpdates.updated_at = Date.now()
+
     const { error } = await supabase
       .from('games')
-      .update({
-        ...updates,
-        updated_at: Date.now(),
-      })
+      .update(dbUpdates)
       .eq('id', gameId)
 
     if (error) throw error
@@ -75,9 +111,10 @@ export async function createPlayer(gameId: string, player: Player): Promise<Play
           x: player.x,
           y: player.y,
           carrying: player.carrying,
-          logs: player.logs,
+          logs_placed: player.logsPlaced,
           status: player.status,
-          reveal_budget: player.revealBudget,
+          last_move_time: player.lastMoveTime,
+          turns_used_today: player.turnsUsedToday,
         },
       ])
       .select()
@@ -106,14 +143,38 @@ export async function getPlayers(gameId: string): Promise<Player[]> {
   }
 }
 
+export async function getPlayer(gameId: string, playerId: string): Promise<Player | null> {
+  try {
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .eq('game_id', gameId)
+      .eq('id', playerId)
+      .single()
+
+    if (error) throw error
+    return data as Player
+  } catch (error) {
+    console.error('Failed to get player:', error)
+    return null
+  }
+}
+
 export async function updatePlayer(gameId: string, playerId: string, updates: Partial<Player>): Promise<boolean> {
   try {
+    const dbUpdates: any = {}
+
+    // Map TypeScript field names to snake_case
+    Object.entries(updates).forEach(([key, value]) => {
+      const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+      dbUpdates[snakeKey] = value
+    })
+
+    dbUpdates.updated_at = Date.now()
+
     const { error } = await supabase
       .from('players')
-      .update({
-        ...updates,
-        updated_at: Date.now(),
-      })
+      .update(dbUpdates)
       .eq('game_id', gameId)
       .eq('id', playerId)
 
@@ -166,11 +227,36 @@ export async function getTiles(gameId: string): Promise<Tile[]> {
   }
 }
 
+export async function getTile(gameId: string, x: number, y: number): Promise<Tile | null> {
+  try {
+    const { data, error } = await supabase
+      .from('tiles')
+      .select('*')
+      .eq('game_id', gameId)
+      .eq('x', x)
+      .eq('y', y)
+      .single()
+
+    if (error) throw error
+    return data as Tile
+  } catch (error) {
+    console.error('Failed to get tile:', error)
+    return null
+  }
+}
+
 export async function updateTile(gameId: string, x: number, y: number, updates: Partial<Tile>): Promise<boolean> {
   try {
+    const dbUpdates: any = {}
+
+    Object.entries(updates).forEach(([key, value]) => {
+      const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+      dbUpdates[snakeKey] = value
+    })
+
     const { error } = await supabase
       .from('tiles')
-      .update(updates)
+      .update(dbUpdates)
       .eq('game_id', gameId)
       .eq('x', x)
       .eq('y', y)
@@ -193,10 +279,12 @@ export async function recordMove(gameId: string, move: Move): Promise<Move | nul
           id: move.id,
           game_id: gameId,
           player_id: move.playerId,
-          turn_number: move.turnNumber,
+          day_number: move.dayNumber,
+          turn_in_day: move.turnInDay,
           move_type: move.moveType,
           x: move.x,
           y: move.y,
+          timestamp: move.timestamp,
         },
       ])
       .select()
@@ -210,15 +298,15 @@ export async function recordMove(gameId: string, move: Move): Promise<Move | nul
   }
 }
 
-export async function getMoves(gameId: string, turnNumber?: number): Promise<Move[]> {
+export async function getMoves(gameId: string, dayNumber?: number): Promise<Move[]> {
   try {
     let query = supabase.from('moves').select('*').eq('game_id', gameId)
 
-    if (turnNumber !== undefined) {
-      query = query.eq('turn_number', turnNumber)
+    if (dayNumber !== undefined) {
+      query = query.eq('day_number', dayNumber)
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false })
+    const { data, error } = await query.order('timestamp', { ascending: true })
 
     if (error) throw error
     return (data || []) as Move[]
@@ -239,8 +327,12 @@ export async function recordEncounter(gameId: string, encounter: Encounter): Pro
           game_id: gameId,
           player_id_1: encounter.playerId1,
           player_id_2: encounter.playerId2,
-          outcome: encounter.outcome,
-          winner: encounter.winner,
+          choice_1: encounter.choice1,
+          choice_2: encounter.choice2,
+          winner_id: encounter.winnerId,
+          loser_id: encounter.loserId,
+          loser_choice: encounter.loserChoice,
+          timestamp: encounter.timestamp,
         },
       ])
       .select()
@@ -306,7 +398,7 @@ export function subscribeToPlayers(gameId: string, callback: (payload: any) => v
   return subscription
 }
 
-export function subscribeTomoves(gameId: string, callback: (payload: any) => void) {
+export function subscribeToMoves(gameId: string, callback: (payload: any) => void) {
   const subscription = supabase
     .channel(`moves:${gameId}`)
     .on(
