@@ -1,16 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import styles from './page.module.css'
 
 const CORRECT_PASSWORD = 'lovesexsecretgod'
 
 export default function Home() {
+  const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [password, setPassword] = useState('')
   const [playerName, setPlayerName] = useState('')
   const [gameCode, setGameCode] = useState('')
   const [showAbout, setShowAbout] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const savedAuth = localStorage.getItem('sosGameAuth')
@@ -32,15 +35,35 @@ export default function Home() {
     }
   }
 
-  const handleCreateGame = () => {
+  const handleCreateGame = async () => {
     if (!playerName.trim()) {
       alert('Enter your name first!')
       return
     }
-    // TODO: Create game via API and navigate
+    try {
+      setIsLoading(true)
+      const res = await fetch('/api/games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerName: playerName.trim() })
+      })
+      const data = await res.json()
+      if (data.success) {
+        localStorage.setItem('playerName', playerName.trim())
+        localStorage.setItem('gameId', data.gameId)
+        router.push(`/board/${data.gameId}`)
+      } else {
+        alert(data.error || 'Failed to create game')
+      }
+    } catch (error) {
+      console.error('Create game error:', error)
+      alert('Failed to create game')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleJoinGame = () => {
+  const handleJoinGame = async () => {
     if (!playerName.trim()) {
       alert('Enter your name first!')
       return
@@ -49,7 +72,36 @@ export default function Home() {
       alert('Enter a game code!')
       return
     }
-    // TODO: Join game via API and navigate
+    try {
+      setIsLoading(true)
+      // First, look up the game by code
+      const lookupRes = await fetch(`/api/games/lookup?code=${gameCode}`)
+      const lookupData = await lookupRes.json()
+      if (!lookupData.success) {
+        alert(lookupData.error || 'Game not found')
+        return
+      }
+
+      // Then, join the game with the player name
+      const joinRes = await fetch(`/api/games/${lookupData.gameId}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerName: playerName.trim() })
+      })
+      const joinData = await joinRes.json()
+      if (joinData.success) {
+        localStorage.setItem('playerName', playerName.trim())
+        localStorage.setItem('gameId', lookupData.gameId)
+        router.push(`/board/${lookupData.gameId}`)
+      } else {
+        alert(joinData.error || 'Failed to join game')
+      }
+    } catch (error) {
+      console.error('Join game error:', error)
+      alert('Failed to join game')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (!isAuthenticated) {
@@ -136,8 +188,9 @@ export default function Home() {
           <button
             onClick={handleCreateGame}
             className={styles.primaryBtn}
+            disabled={isLoading}
           >
-            Create Game
+            {isLoading ? 'Loading...' : 'Create Game'}
           </button>
 
           <div className={styles.joinSection}>
@@ -148,8 +201,11 @@ export default function Home() {
               onChange={(e) => setGameCode(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleJoinGame()}
               maxLength={6}
+              disabled={isLoading}
             />
-            <button onClick={handleJoinGame}>Join</button>
+            <button onClick={handleJoinGame} disabled={isLoading}>
+              {isLoading ? 'Loading...' : 'Join'}
+            </button>
           </div>
         </div>
       </div>
