@@ -1,5 +1,5 @@
 import { Player, GameState, MoveType, Encounter, EncounterOutcome, Faction } from './types'
-import { getTile, getAdjacentTiles, generateMap } from './mapGenerator'
+import { getTile, generateMap } from './mapGenerator'
 import * as C from './constants'
 
 export function initializeGame(gameId: string): GameState {
