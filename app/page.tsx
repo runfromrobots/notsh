@@ -44,10 +44,13 @@ export default function Home() {
       const res = await fetch('/api/games/list?status=waiting')
       if (res.ok) {
         const data = await res.json()
-        setGames(data.games || [])
+        if (data && Array.isArray(data.games)) {
+          setGames(data.games)
+        }
       }
     } catch (error) {
       console.error('Failed to fetch games:', error)
+      setGames([])
     }
   }
 
@@ -79,18 +82,26 @@ export default function Home() {
       })
 
       if (!res.ok) {
-        const error = await res.json()
-        alert(`Failed to create game: ${error.error}`)
+        try {
+          const error = await res.json()
+          alert(`Failed to create game: ${error?.error || 'Unknown error'}`)
+        } catch {
+          alert('Failed to create game')
+        }
         setLoading(false)
         return
       }
 
       const data = await res.json()
-      const gameId = data.gameId
+      if (!data?.gameId) {
+        alert('Invalid response from server')
+        setLoading(false)
+        return
+      }
 
       // Store player name and navigate to lobby
       localStorage.setItem('playerName', playerName.trim())
-      router.push(`/lobby/${gameId}`)
+      router.push(`/lobby/${data.gameId}`)
     } catch (error) {
       console.error('Error creating game:', error)
       alert('Failed to create game')
@@ -118,12 +129,21 @@ export default function Home() {
       try {
         const lookupRes = await fetch(`/api/games/lookup?code=${codeToUse}`)
         if (!lookupRes.ok) {
-          const error = await lookupRes.json()
-          alert(`Game not found: ${error.error}`)
+          try {
+            const error = await lookupRes.json()
+            alert(`Game not found: ${error?.error || 'Unknown error'}`)
+          } catch {
+            alert('Game not found')
+          }
           setLoading(false)
           return
         }
         const lookupData = await lookupRes.json()
+        if (!lookupData?.gameId) {
+          alert('Invalid response from server')
+          setLoading(false)
+          return
+        }
         targetGameId = lookupData.gameId
       } catch (error) {
         console.error('Error looking up game:', error)
@@ -141,13 +161,22 @@ export default function Home() {
       })
 
       if (!res.ok) {
-        const error = await res.json()
-        alert(`Failed to join game: ${error.error}`)
+        try {
+          const error = await res.json()
+          alert(`Failed to join game: ${error?.error || 'Unknown error'}`)
+        } catch {
+          alert('Failed to join game')
+        }
         setLoading(false)
         return
       }
 
       const data = await res.json()
+      if (!data?.success) {
+        alert(`Failed to join game: ${data?.error || 'Unknown error'}`)
+        setLoading(false)
+        return
+      }
 
       // Store player name and navigate to lobby
       localStorage.setItem('playerName', playerName.trim())
