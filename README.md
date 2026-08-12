@@ -179,3 +179,4 @@ Private project.
 - Turn-based design supports async multi-day play
 - Designed as browser-first, no native app
 - Realtime Supabase subscriptions notify players of moves and events
+
