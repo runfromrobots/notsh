@@ -28,10 +28,10 @@ export async function POST(
       )
     }
 
-    // Check if game is still waiting
-    if (game.status !== GameStatus.Waiting) {
+    // Check if game is locked
+    if (game.isLocked) {
       return NextResponse.json(
-        { success: false, error: 'Game already started' },
+        { success: false, error: 'Game is locked - already in progress' },
         { status: 400 }
       )
     }
@@ -60,7 +60,7 @@ export async function POST(
       )
     }
 
-    // If this is the second player, start the game
+    // If this is the second player, spawn them on map
     if (players.length === 1) {
       const allPlayers = [...players, savedPlayer]
 
@@ -68,35 +68,18 @@ export async function POST(
       const mapData = generateMapData(game.mapSeed)
       const tilesArray = Array.from(mapData.tiles.values())
 
-      // Spawn both players (they get positions based on faction)
-      allPlayers.forEach((player) => {
-        // Find spawn positions from map
-        const spawnTiles = tilesArray.filter(
-          (tile) =>
-            (player.faction === Faction.Pirates
-              ? tile.x > 32 && tile.y < 14
-              : tile.x < 32 && tile.y > 34) &&
-            (tile.type === 'beach' || tile.type === 'jungle' || tile.type === 'shore')
-        )
+      // Spawn second player (Navy side)
+      const spawnTiles = tilesArray.filter(
+        (tile) =>
+          tile.x < 32 && tile.y > 34 &&
+          (tile.type === 'beach' || tile.type === 'jungle' || tile.type === 'shore')
+      )
 
-        if (spawnTiles.length > 0) {
-          const spawn = spawnTiles[Math.floor(Math.random() * spawnTiles.length)]
-          player.x = spawn.x
-          player.y = spawn.y
-        }
-      })
-
-      // Update game status and current player
-      await updateGame(gameId, {
-        status: GameStatus.Active,
-        currentPlayerFaction: Faction.Pirates,
-      })
-
-      // Update both players with spawn positions
-      for (const player of allPlayers) {
-        await updatePlayer(gameId, player.id, {
-          x: player.x,
-          y: player.y,
+      if (spawnTiles.length > 0) {
+        const spawn = spawnTiles[Math.floor(Math.random() * spawnTiles.length)]
+        await updatePlayer(gameId, savedPlayer.id, {
+          x: spawn.x,
+          y: spawn.y,
         })
       }
     }
@@ -105,7 +88,7 @@ export async function POST(
       success: true,
       playerId: savedPlayer.id,
       faction: savedPlayer.faction,
-      gameStatus: players.length === 0 ? 'waiting' : 'started',
+      gameStatus: players.length === 0 ? 'waiting' : 'ready',
     })
   } catch (error) {
     console.error('Error joining game:', error)

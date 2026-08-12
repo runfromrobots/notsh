@@ -6,7 +6,6 @@ import styles from './page.module.css'
 
 const CORRECT_PASSWORD = 'lovesexsecretgod'
 
-
 export default function Home() {
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -23,7 +22,6 @@ export default function Home() {
     }
   }, [])
 
-
   const handlePasswordSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       if (password === CORRECT_PASSWORD) {
@@ -37,7 +35,7 @@ export default function Home() {
     }
   }
 
-  const handleCreateGame = async (solo: boolean = false) => {
+  const handleCreateGame = async () => {
     if (!playerName.trim()) {
       alert('Enter your name first!')
       return
@@ -48,7 +46,7 @@ export default function Home() {
       const res = await fetch('/api/games', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerName: playerName.trim(), soloMode: solo }),
+        body: JSON.stringify({ playerName: playerName.trim() }),
       })
 
       if (!res.ok) {
@@ -69,9 +67,8 @@ export default function Home() {
         return
       }
 
-      // Store player name and navigate to lobby
       localStorage.setItem('playerName', playerName.trim())
-      router.push(`/lobby/${data.gameId}`)
+      router.push(`/board/${data.gameId}`)
     } catch (error) {
       console.error('Error creating game:', error)
       alert('Failed to create game')
@@ -79,52 +76,40 @@ export default function Home() {
     }
   }
 
-  const handleJoinGame = async (gameIdToJoin?: string) => {
+  const handleJoinGame = async () => {
     if (!playerName.trim()) {
       alert('Enter your name first!')
       return
     }
 
-    let targetGameId = gameIdToJoin
+    const codeToUse = gameCode.trim()
+    if (!codeToUse) {
+      alert('Enter a game code!')
+      return
+    }
 
-    // If no gameId provided, look up by code
-    if (!targetGameId) {
-      const codeToUse = gameCode.trim()
-      if (!codeToUse) {
-        alert('Enter a game code!')
-        return
-      }
-
-      setLoading(true)
-      try {
-        const lookupRes = await fetch(`/api/games/lookup?code=${codeToUse}`)
-        if (!lookupRes.ok) {
-          try {
-            const error = await lookupRes.json()
-            alert(`Game not found: ${error?.error || 'Unknown error'}`)
-          } catch {
-            alert('Game not found')
-          }
-          setLoading(false)
-          return
+    setLoading(true)
+    try {
+      const lookupRes = await fetch(`/api/games/lookup?code=${codeToUse}`)
+      if (!lookupRes.ok) {
+        try {
+          const error = await lookupRes.json()
+          alert(`Game not found: ${error?.error || 'Unknown error'}`)
+        } catch {
+          alert('Game not found')
         }
-        const lookupData = await lookupRes.json()
-        if (!lookupData?.gameId) {
-          alert('Invalid response from server')
-          setLoading(false)
-          return
-        }
-        targetGameId = lookupData.gameId
-      } catch (error) {
-        console.error('Error looking up game:', error)
-        alert('Failed to lookup game')
         setLoading(false)
         return
       }
-    }
+      const lookupData = await lookupRes.json()
+      if (!lookupData?.gameId) {
+        alert('Invalid response from server')
+        setLoading(false)
+        return
+      }
 
-    try {
-      const res = await fetch(`/api/games/${targetGameId}/join`, {
+      const gameId = lookupData.gameId
+      const res = await fetch(`/api/games/${gameId}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ playerName: playerName.trim() }),
@@ -141,16 +126,8 @@ export default function Home() {
         return
       }
 
-      const data = await res.json()
-      if (!data?.success) {
-        alert(`Failed to join game: ${data?.error || 'Unknown error'}`)
-        setLoading(false)
-        return
-      }
-
-      // Store player name and navigate to lobby
       localStorage.setItem('playerName', playerName.trim())
-      router.push(`/lobby/${targetGameId}`)
+      router.push(`/board/${gameId}`)
     } catch (error) {
       console.error('Error joining game:', error)
       alert('Failed to join game')
@@ -181,16 +158,6 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
-      {/* Tattoo Art Placeholder - Top Left */}
-      <div className={styles.artworkPlaceholder + ' ' + styles.artTopLeft}>
-        <div className={styles.placeholder}>[Anchor Tattoo]</div>
-      </div>
-
-      {/* Tattoo Art Placeholder - Top Right */}
-      <div className={styles.artworkPlaceholder + ' ' + styles.artTopRight}>
-        <div className={styles.placeholder}>[Ship Wheel]</div>
-      </div>
-
       <div className={styles.content}>
         <div className={styles.titleSection}>
           <h1>SOS</h1>
@@ -244,24 +211,13 @@ export default function Home() {
         </div>
 
         <div className={styles.actions}>
-          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            <button
-              onClick={() => handleCreateGame(true)}
-              className={styles.primaryBtn}
-              disabled={loading}
-              style={{ flex: 1 }}
-            >
-              {loading ? 'Starting...' : 'Solo Game'}
-            </button>
-            <button
-              onClick={() => handleCreateGame(false)}
-              className={styles.primaryBtn}
-              disabled={loading}
-              style={{ flex: 1 }}
-            >
-              {loading ? 'Starting...' : 'Multiplayer'}
-            </button>
-          </div>
+          <button
+            onClick={handleCreateGame}
+            className={styles.primaryBtn}
+            disabled={loading}
+          >
+            {loading ? 'Starting...' : 'Create Game'}
+          </button>
 
           <div className={styles.joinSection}>
             <input
@@ -275,22 +231,11 @@ export default function Home() {
               maxLength={6}
               disabled={loading}
             />
-            <button onClick={() => handleJoinGame()} disabled={loading}>
+            <button onClick={handleJoinGame} disabled={loading}>
               Join
             </button>
           </div>
         </div>
-
-      </div>
-
-      {/* Tattoo Art Placeholder - Bottom Left */}
-      <div className={styles.artworkPlaceholder + ' ' + styles.artBottomLeft}>
-        <div className={styles.placeholder}>[Wave Pattern]</div>
-      </div>
-
-      {/* Tattoo Art Placeholder - Bottom Right */}
-      <div className={styles.artworkPlaceholder + ' ' + styles.artBottomRight}>
-        <div className={styles.placeholder}>[Compass Rose]</div>
       </div>
     </div>
   )

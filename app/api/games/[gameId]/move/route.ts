@@ -112,11 +112,15 @@ export async function POST(
     const newDayNumber = nextTurnInDay >= 12 ? game.dayNumber + 1 : game.dayNumber
     const newTurnInDay = nextTurnInDay >= 12 ? 0 : nextTurnInDay
 
-    await updateGame(gameId, {
+    // Lock game on first move
+    const gameUpdates: any = {
       currentPlayerFaction: nextFaction,
       dayNumber: newDayNumber,
       currentTurnInDay: newTurnInDay,
-    })
+      isLocked: true,
+    }
+
+    await updateGame(gameId, gameUpdates)
 
     return NextResponse.json({
       success: true,

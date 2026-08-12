@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateMap } from '@/lib/mapGenerator'
-import { createGame, getGame, getTiles, upsertTiles, getPlayers, createPlayer, updateGame, updatePlayer } from '@/lib/db'
+import { createGame, getTiles, upsertTiles, createPlayer, updateGame, updatePlayer } from '@/lib/db'
 import { initializePlayer } from '@/lib/gameLogic'
 import { Faction, GameStatus } from '@/lib/types'
 
 export async function POST(request: NextRequest) {
   try {
-    const { playerName, soloMode } = await request.json()
+    const { playerName } = await request.json()
 
     if (!playerName || !playerName.trim()) {
       return NextResponse.json(
@@ -41,79 +41,44 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // If solo mode, create both players and start game immediately
-    if (soloMode) {
-      // Create first player (Pirates)
-      const playerId1 = `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      const player1 = initializePlayer(playerId1, playerName.trim(), Faction.Pirates)
-      const savedPlayer1 = await createPlayer(game.id, player1)
+    // Create first player (Pirates)
+    const playerId1 = `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const player1 = initializePlayer(playerId1, playerName.trim(), Faction.Pirates)
+    const savedPlayer1 = await createPlayer(game.id, player1)
 
-      if (!savedPlayer1) {
-        return NextResponse.json(
-          { success: false, error: 'Failed to create first player' },
-          { status: 500 }
-        )
-      }
+    if (!savedPlayer1) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to create player' },
+        { status: 500 }
+      )
+    }
 
-      // Create second player (Navy)
-      const playerId2 = `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      const player2 = initializePlayer(playerId2, `${playerName.trim()} (Navy)`, Faction.Navy)
-      const savedPlayer2 = await createPlayer(game.id, player2)
+    // Spawn player on map
+    const spawnTiles = tilesArray.filter(
+      (tile) =>
+        tile.x > 32 && tile.y < 14 &&
+        (tile.type === 'beach' || tile.type === 'jungle' || tile.type === 'shore')
+    )
 
-      if (!savedPlayer2) {
-        return NextResponse.json(
-          { success: false, error: 'Failed to create second player' },
-          { status: 500 }
-        )
-      }
-
-      // Spawn both players on map
-      const allPlayers = [savedPlayer1, savedPlayer2]
-      allPlayers.forEach((player) => {
-        const spawnTiles = tilesArray.filter(
-          (tile) =>
-            (player.faction === Faction.Pirates
-              ? tile.x > 32 && tile.y < 14
-              : tile.x < 32 && tile.y > 34) &&
-            (tile.type === 'beach' || tile.type === 'jungle' || tile.type === 'shore')
-        )
-
-        if (spawnTiles.length > 0) {
-          const spawn = spawnTiles[Math.floor(Math.random() * spawnTiles.length)]
-          player.x = spawn.x
-          player.y = spawn.y
-        }
-      })
-
-      // Update game status to active
-      await updateGame(game.id, {
-        status: GameStatus.Active,
-        currentPlayerFaction: Faction.Pirates,
-      })
-
-      // Update player positions
-      for (const player of allPlayers) {
-        await updatePlayer(game.id, player.id, {
-          x: player.x,
-          y: player.y,
-        })
-      }
-
-      return NextResponse.json({
-        success: true,
-        gameId: game.id,
-        code: game.code,
-        game,
-        soloMode: true,
-        playerId: playerId1,
+    if (spawnTiles.length > 0) {
+      const spawn = spawnTiles[Math.floor(Math.random() * spawnTiles.length)]
+      await updatePlayer(game.id, playerId1, {
+        x: spawn.x,
+        y: spawn.y,
       })
     }
+
+    // Update game status to active with first player's faction
+    await updateGame(game.id, {
+      status: GameStatus.Active,
+      currentPlayerFaction: Faction.Pirates,
+    })
 
     return NextResponse.json({
       success: true,
       gameId: game.id,
       code: game.code,
-      game,
+      playerId: playerId1,
     })
   } catch (error) {
     console.error('Error creating game:', error)

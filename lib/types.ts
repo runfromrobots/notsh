@@ -64,6 +64,7 @@ export interface GameState {
   mapSeed: number
   sosPositions: Array<{ x: number; y: number }> // shared SOS log positions
   rescuedPlayers: string[] // player IDs who escaped
+  isLocked: boolean // game locked when first move is made or manually locked
 }
 
 // Move types
