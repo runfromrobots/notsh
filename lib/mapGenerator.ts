@@ -185,18 +185,16 @@ export function generateMap(seed: number): GridState {
 
           // 25% of interior is mountain clusters (large contiguous blocks)
           if (clusterNoise < 0.25) {
-            // Mountain cluster - assign elevation based on fine noise within cluster
-            const fineNoise = perlinNoise(x, y, seed)
-
-            // Create elevation tiers: peaks are in the highest 33% of noise, etc.
-            if (fineNoise < 0.15) {
-              // Peak: snowy white (level 3)
+            // Mountain cluster - elevation follows cluster gradient for smooth transitions
+            // Map cluster noise (0-0.25) to elevation levels
+            if (clusterNoise < 0.08) {
+              // Peak: snowy white (level 3) - center of cluster
               type = TileType.MountainPeak
-            } else if (fineNoise < 0.22) {
-              // Mid elevation: light gray (level 2)
+            } else if (clusterNoise < 0.16) {
+              // Mid elevation: light gray (level 2) - middle slopes
               type = TileType.MountainMid
             } else {
-              // Base: dark gray (level 1)
+              // Base: dark gray (level 1) - outer slopes
               type = TileType.MountainBase
             }
           } else {
