@@ -287,6 +287,7 @@ export default function Board() {
 
   const isYourTurn = currentPlayer && game?.currentPlayerFaction === currentPlayer.faction
   const opponent = players.find((p) => p.id !== currentPlayer?.id)
+  const turnDisplay = isYourTurn ? 'Your Turn' : (opponent?.name ? `${opponent.name}'s Turn` : 'Waiting for opponent...')
 
   return (
     <div className={styles.container}>
@@ -294,7 +295,7 @@ export default function Board() {
         <div className={styles.gameInfo}>
           <h1>SOS - Day {game?.dayNumber || 1}</h1>
           <p className={styles.turnInfo}>
-            Turn {game?.currentTurnInDay || 0}/12 - {isYourTurn ? 'Your Turn' : `${opponent?.name}'s Turn`}
+            Turn {game?.currentTurnInDay || 0}/12 - {turnDisplay}
           </p>
           {game?.code && (
             <p className={styles.gameCode}>Code: {game.code}</p>
