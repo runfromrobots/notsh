@@ -262,37 +262,31 @@
         function generateMap(seed) {
             const tiles = [];
             const rng = new SeededRandom(seed);
-            const centerX = (MAP_WIDTH - 1) / 2;
-            const centerY = (MAP_HEIGHT - 1) / 2;
-            const maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
+            const centerX = MAP_WIDTH / 2;
+            const centerY = MAP_HEIGHT / 2;
+            const islandRadius = 20; // Fixed radius for the island
 
             for (let y = 0; y < MAP_HEIGHT; y++) {
                 for (let x = 0; x < MAP_WIDTH; x++) {
-                    // Distance from center determines land/water boundary
+                    // Simple distance check
                     const dx = x - centerX;
                     const dy = y - centerY;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    const distRatio = dist / maxDist;
 
-                    // Use noise + distance to create organic island shape
+                    // Use noise to add organic variation to island edge
                     const noise = perlinNoise(x, y, seed);
-                    const islandThreshold = 0.55 + (noise * 0.15); // 0.4 to 0.7 range
+                    const adjustedRadius = islandRadius + (noise - 0.5) * 4; // ±2 tile variation
 
                     let type;
-                    if (distRatio > islandThreshold) {
+                    if (dist > adjustedRadius) {
                         // Water
                         type = 'water';
                     } else {
                         // Land - assign terrain type based on noise
-                        if (noise < 0.25) type = 'mountain';
-                        else if (noise < 0.35) type = 'beach';
-                        else if (noise < 0.65) type = 'jungle';
-                        else type = 'shore';
-                    }
-
-                    // Add some shore tiles at coastline
-                    if (type !== 'water' && distRatio > islandThreshold - 0.1 && distRatio < islandThreshold + 0.05) {
-                        if (rng.next() > 0.5) type = 'shore';
+                        if (noise < 0.20) type = 'mountain';
+                        else if (noise < 0.30) type = 'beach';
+                        else if (noise < 0.70) type = 'jungle';
+                        else type = 'beach';
                     }
 
                     const hasLog = type !== 'water' && type !== 'mountain' && rng.next() < LOG_SPAWN_CHANCE[type];

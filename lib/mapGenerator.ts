@@ -124,37 +124,31 @@ export function generateIslandName(seed: number): string {
 export function generateMap(seed: number): GridState {
   const tiles: Tile[] = []
   const rng = new SeededRandom(seed)
-  const centerX = (C.MAP_WIDTH - 1) / 2
-  const centerY = (C.MAP_HEIGHT - 1) / 2
-  const maxDist = Math.sqrt(centerX * centerX + centerY * centerY)
+  const centerX = C.MAP_WIDTH / 2
+  const centerY = C.MAP_HEIGHT / 2
+  const islandRadius = 20 // Fixed radius for the island
 
-  // Generate island based on distance from center + noise for organic shape
+  // Generate island based on distance from center
   for (let y = 0; y < C.MAP_HEIGHT; y++) {
     for (let x = 0; x < C.MAP_WIDTH; x++) {
-      // Distance from center determines land/water boundary
+      // Simple distance check
       const dx = x - centerX
       const dy = y - centerY
       const dist = Math.sqrt(dx * dx + dy * dy)
-      const distRatio = dist / maxDist
 
-      // Use noise + distance to create organic island shape
+      // Use noise to add organic variation to island edge
       const noise = perlinNoise(x, y, seed)
-      const islandThreshold = 0.55 + (noise * 0.15) // 0.4 to 0.7 range
+      const adjustedRadius = islandRadius + (noise - 0.5) * 4 // ±2 tile variation
 
       let type: TileType
-      if (distRatio > islandThreshold) {
+      if (dist > adjustedRadius) {
         type = TileType.Water
       } else {
         // Land - assign terrain type based on noise
-        if (noise < 0.25) type = TileType.Mountain
-        else if (noise < 0.35) type = TileType.Beach
-        else if (noise < 0.65) type = TileType.Jungle
-        else type = TileType.Shore
-      }
-
-      // Add some shore tiles at coastline
-      if (type !== TileType.Water && distRatio > islandThreshold - 0.1 && distRatio < islandThreshold + 0.05) {
-        if (rng.next() > 0.5) type = TileType.Shore
+        if (noise < 0.20) type = TileType.Mountain
+        else if (noise < 0.30) type = TileType.Beach
+        else if (noise < 0.70) type = TileType.Jungle
+        else type = TileType.Beach
       }
 
       const hasLog = type !== TileType.Water && type !== TileType.Mountain && shouldSpawnLog(type, rng)
