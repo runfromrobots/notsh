@@ -6,12 +6,6 @@ import styles from './page.module.css'
 
 const CORRECT_PASSWORD = 'lovesexsecretgod'
 
-interface Game {
-  id: string
-  code: string
-  playerCount: number
-  players: Array<{ id: string; name: string; faction: string }>
-}
 
 export default function Home() {
   const router = useRouter()
@@ -20,7 +14,6 @@ export default function Home() {
   const [playerName, setPlayerName] = useState('')
   const [gameCode, setGameCode] = useState('')
   const [showAbout, setShowAbout] = useState(false)
-  const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -30,29 +23,6 @@ export default function Home() {
     }
   }, [])
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchGames()
-      // Poll for new games every 5 seconds
-      const interval = setInterval(fetchGames, 5000)
-      return () => clearInterval(interval)
-    }
-  }, [isAuthenticated])
-
-  const fetchGames = async () => {
-    try {
-      const res = await fetch('/api/games/list?status=waiting')
-      if (res.ok) {
-        const data = await res.json()
-        if (data && Array.isArray(data.games)) {
-          setGames(data.games)
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch games:', error)
-      setGames([])
-    }
-  }
 
   const handlePasswordSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -311,32 +281,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Game List */}
-        {games.length > 0 && (
-          <div className={styles.gamesList}>
-            <h3>Available Games</h3>
-            <div className={styles.gamesGrid}>
-              {games.map((game) => (
-                <div key={game.id} className={styles.gameCard}>
-                  <p className={styles.gameCode}>Code: {game.code}</p>
-                  <p className={styles.playerCount}>{game.playerCount || 0}/2 players</p>
-                  {Array.isArray(game.players) && game.players.length > 0 && (
-                    <p className={styles.gamePlayer}>
-                      Playing: {game.players[0].name}
-                    </p>
-                  )}
-                  <button
-                    onClick={() => handleJoinGame(game.id)}
-                    className={styles.joinGameBtn}
-                    disabled={loading}
-                  >
-                    Join
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Tattoo Art Placeholder - Bottom Left */}
