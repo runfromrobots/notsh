@@ -38,7 +38,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
 
         <div className={styles.stat}>
           <span className={styles.label}>🪵 Logs Contributed</span>
-          <span className={styles.value}>{player.logs}</span>
+          <span className={styles.value}>{player.logsPlaced}</span>
         </div>
 
         <div className={styles.stat}>
@@ -50,7 +50,7 @@ export default function PlayerInfo({ player }: PlayerInfoProps) {
 
         <div className={styles.stat}>
           <span className={styles.label}>⏱️ Moves Remaining</span>
-          <span className={styles.value}>{player.revealBudget}</span>
+          <span className={styles.value}>{12 - player.turnsUsedToday}</span>
         </div>
       </div>
     </div>
