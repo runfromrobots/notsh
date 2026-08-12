@@ -16,8 +16,14 @@ class SeededRandom {
 }
 
 function perlinNoise(x: number, y: number, seed: number): number {
-  const rng = new SeededRandom(seed + x * 73856093 ^ y * 19349663)
-  return rng.next()
+  // Better hash function to avoid left/right bias
+  let h = seed
+  h = ((h ^ (x * 73856093)) >>> 0)
+  h = ((h ^ (y * 19349663)) >>> 0)
+  h = h ^ (h >> 16)
+  h = Math.imul(h, 2246822519)
+  h = h ^ (h >> 13)
+  return ((h >>> 0) % 1000000) / 1000000
 }
 
 function getTileType(noise: number): TileType {
