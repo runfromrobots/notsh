@@ -3,6 +3,13 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
+if (typeof window === 'undefined') {
+  console.log('[Supabase] URL:', supabaseUrl)
+  console.log('[Supabase] Key configured:', !!supabaseAnonKey)
+  if (!supabaseUrl) console.error('[Supabase] NEXT_PUBLIC_SUPABASE_URL is missing')
+  if (!supabaseAnonKey) console.error('[Supabase] NEXT_PUBLIC_SUPABASE_ANON_KEY is missing')
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Database schema functions (to be used in migrations)

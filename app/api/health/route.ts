@@ -3,15 +3,47 @@ import { supabase } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   try {
-    // Test Supabase connection
-    const { data, error } = await supabase.from('games').select('count', { count: 'exact', head: true })
+    // Check environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    if (error) {
+    if (!supabaseUrl || !supabaseKey) {
       return NextResponse.json(
         {
           status: 'error',
-          message: 'Supabase connection failed',
-          error: error.message,
+          message: 'Environment variables not configured',
+          url: supabaseUrl ? 'configured' : 'missing',
+          key: supabaseKey ? 'configured' : 'missing',
+        },
+        { status: 500 }
+      )
+    }
+
+    // Test Supabase connection with a simple select
+    console.log('Testing Supabase connection...')
+    const { data, error, status } = await supabase
+      .from('games')
+      .select('id')
+      .limit(1)
+
+    console.log('Query result:', { data, error, status })
+
+    if (error) {
+      console.error('Supabase error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        toString: error.toString(),
+      })
+      return NextResponse.json(
+        {
+          status: 'error',
+          message: 'Supabase query failed',
+          error: error.message || 'Unknown error',
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
         },
         { status: 503 }
       )
@@ -21,15 +53,18 @@ export async function GET(request: NextRequest) {
       status: 'healthy',
       message: 'Supabase connection successful',
       timestamp: new Date().toISOString(),
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || 'not configured',
+      supabaseUrl: supabaseUrl,
       gameCount: data?.length || 0,
+      queryStatus: status,
     })
   } catch (error: any) {
+    console.error('Health check error:', error)
     return NextResponse.json(
       {
         status: 'error',
         message: 'Health check failed',
         error: error?.message || 'Unknown error',
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
       },
       { status: 500 }
     )
