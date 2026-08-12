@@ -132,29 +132,61 @@ export function generateMap(seed: number): GridState {
   const rng = new SeededRandom(seed)
   const centerX = C.MAP_WIDTH / 2
   const centerY = C.MAP_HEIGHT / 2
-  const islandRadius = 20 // Fixed radius for the island
+  const islandRadius = 20
+  const edgeThickness = 3 // How many tiles thick the shore ring is
 
-  // Generate island based on distance from center
+  // First pass: Determine which tiles are island
+  const islandTiles = new Set<string>()
   for (let y = 0; y < C.MAP_HEIGHT; y++) {
     for (let x = 0; x < C.MAP_WIDTH; x++) {
-      // Simple distance check
       const dx = x - centerX
       const dy = y - centerY
       const dist = Math.sqrt(dx * dx + dy * dy)
-
-      // Use noise to add organic variation to island edge
       const noise = perlinNoise(x, y, seed)
-      const adjustedRadius = islandRadius + (noise - 0.5) * 4 // ±2 tile variation
+      const adjustedRadius = islandRadius + (noise - 0.5) * 4
 
+      if (dist <= adjustedRadius) {
+        islandTiles.add(`${x},${y}`)
+      }
+    }
+  }
+
+  // Second pass: Assign terrain types
+  for (let y = 0; y < C.MAP_HEIGHT; y++) {
+    for (let x = 0; x < C.MAP_WIDTH; x++) {
+      const key = `${x},${y}`
       let type: TileType
-      if (dist > adjustedRadius) {
+
+      if (!islandTiles.has(key)) {
+        // Water
         type = TileType.Water
       } else {
-        // Land - assign terrain type based on noise
-        if (noise < 0.10) type = TileType.Mountain
-        else if (noise < 0.25) type = TileType.Beach
-        else if (noise < 0.75) type = TileType.Jungle
-        else type = TileType.Beach
+        // Check if this is an edge tile (close to water)
+        let distToWater = Infinity
+        for (let dy = -edgeThickness; dy <= edgeThickness; dy++) {
+          for (let dx = -edgeThickness; dx <= edgeThickness; dx++) {
+            const nx = x + dx
+            const ny = y + dy
+            if (!islandTiles.has(`${nx},${ny}`)) {
+              const d = Math.sqrt(dx * dx + dy * dy)
+              distToWater = Math.min(distToWater, d)
+            }
+          }
+        }
+
+        if (distToWater <= edgeThickness) {
+          // Shore ring
+          type = TileType.Beach
+        } else {
+          // Interior: jungle with mountain clusters
+          const noise = perlinNoise(x, y, seed)
+          // Mountain clusters: use noise to create patches
+          if (noise < 0.08) {
+            type = TileType.Mountain
+          } else {
+            type = TileType.Jungle
+          }
+        }
       }
 
       const hasLog = type !== TileType.Water && type !== TileType.Mountain && shouldSpawnLog(type, rng)
