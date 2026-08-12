@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import styles from './board.module.css'
 
+// Coin flip debugging enabled
+
 interface Tile {
   x: number
   y: number
@@ -60,12 +62,10 @@ export default function Board() {
   const [playerName, setPlayerName] = useState('')
   const [loading, setLoading] = useState(true)
   const [selectedAction, setSelectedAction] = useState<'move' | 'place-log' | null>(null)
-  const [showRPSModal, setShowRPSModal] = useState(false)
   const [showRescueModal, setShowRescueModal] = useState(false)
   const [showCoinFlip, setShowCoinFlip] = useState(false)
   const [coinFlipping, setCoinFlipping] = useState(false)
   const [coinResult, setCoinResult] = useState<'heads' | 'tails' | null>(null)
-  const [playerChoice, setPlayerChoice] = useState<'heads' | 'tails' | null>(null)
 
   useEffect(() => {
     const name = localStorage.getItem('playerName')
@@ -87,10 +87,14 @@ export default function Board() {
 
   useEffect(() => {
     // Show coin flip if both players joined but currentPlayerFaction is not set yet
-    if (players.length === 2 && game?.currentTurnInDay === 0 && !coinFlipping && !coinResult) {
+    if (players.length === 2 && !game?.currentPlayerFaction && !coinFlipping && !coinResult) {
+      console.log('[CoinFlip] Condition met: showing coin flip modal')
       setShowCoinFlip(true)
+    } else if (players.length === 2 && game?.currentPlayerFaction) {
+      console.log('[CoinFlip] currentPlayerFaction is set, closing modal')
+      setShowCoinFlip(false)
     }
-  }, [players.length, game?.currentTurnInDay, coinFlipping, coinResult])
+  }, [players.length, game?.currentPlayerFaction, coinFlipping, coinResult])
 
   useEffect(() => {
     if (canvasRef.current && (tiles?.length || 0) > 0 && currentPlayer) {
@@ -144,6 +148,12 @@ export default function Board() {
       const res = await fetch(`/api/games?id=${gameId}`)
       if (res.ok) {
         const data = await res.json()
+        console.log('[GameState] Fetched:', {
+          players: data.players?.length || 0,
+          currentPlayerFaction: data.game?.currentPlayerFaction,
+          dayNumber: data.game?.dayNumber,
+          currentTurnInDay: data.game?.currentTurnInDay,
+        })
         setGame(data.game)
         setPlayers(data.players || [])
         setTiles(data.tiles || [])
@@ -157,10 +167,6 @@ export default function Board() {
     } catch (error) {
       console.error('Failed to fetch game state:', error)
     }
-  }
-
-  const fetchGameStateWithName = async (name: string) => {
-    await fetchGameState()
   }
 
   const renderMap = () => {
@@ -330,7 +336,7 @@ export default function Board() {
   }
 
   const handleCoinFlip = async (choice: 'heads' | 'tails') => {
-    setPlayerChoice(choice)
+    console.log('[CoinFlip] User chose:', choice)
     setCoinFlipping(true)
 
     // Simulate coin flip animation
@@ -338,27 +344,29 @@ export default function Board() {
 
     // Random result
     const result = Math.random() > 0.5 ? 'heads' : 'tails'
+    console.log('[CoinFlip] Result:', result)
     setCoinResult(result)
 
     // Determine winner faction
     const winnerFaction = result === 'heads' ? 'pirates' : 'navy'
-    const playerWon = (currentPlayer?.faction === 'pirates' && result === 'heads') ||
-                      (currentPlayer?.faction === 'navy' && result === 'tails')
+    console.log('[CoinFlip] Starting faction:', winnerFaction)
 
     // Set the starting faction
     try {
-      await fetch(`/api/games/${gameId}/coin-flip`, {
+      const flipRes = await fetch(`/api/games/${gameId}/coin-flip`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ startingFaction: winnerFaction }),
       })
+      const flipData = await flipRes.json()
+      console.log('[CoinFlip] Endpoint response:', flipData)
 
       // Wait a bit for dramatic effect, then close modal and fetch updated state
       await new Promise((resolve) => setTimeout(resolve, 1500))
       setShowCoinFlip(false)
       fetchGameState()
     } catch (error) {
-      console.error('Coin flip error:', error)
+      console.error('[CoinFlip] Error:', error)
       alert('Failed to set starting player')
     }
   }
@@ -483,17 +491,6 @@ export default function Board() {
           )}
         </div>
       </div>
-
-      {/* RPS Modal */}
-      {showRPSModal && (
-        <div className={styles.modal}>
-          <div className={styles.modalContent}>
-            <h2>Rock Paper Scissors!</h2>
-            <p>You encountered an opponent!</p>
-            {/* RPS will be implemented next */}
-          </div>
-        </div>
-      )}
 
       {/* Rescue Modal */}
       {showRescueModal && (
