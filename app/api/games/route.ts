@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateMap } from '@/lib/mapGenerator'
-import { createGame, getTiles, upsertTiles, createPlayer, updateGame, updatePlayer } from '@/lib/db'
+import { createGame, getGame, getTiles, upsertTiles, createPlayer, updateGame, updatePlayer, getPlayers } from '@/lib/db'
 import { initializePlayer } from '@/lib/gameLogic'
 import { Faction, GameStatus } from '@/lib/types'
 
