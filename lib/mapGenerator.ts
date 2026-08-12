@@ -47,93 +47,109 @@ function getTile(x: number, y: number, tiles: Tile[]): Tile | null {
   return tiles[y * C.MAP_WIDTH + x] || null
 }
 
-function isAllLandConnected(tiles: Tile[]): boolean {
-  // Find first navigable tile
-  let startX = -1, startY = -1
+function findLargestConnectedComponent(tiles: Tile[]): Set<string> {
+  const landTiles = new Map<string, Tile>()
+
+  // Index all navigable tiles
   for (const tile of tiles) {
     if (isNavigable(tile.type)) {
-      startX = tile.x
-      startY = tile.y
-      break
+      landTiles.set(`${tile.x},${tile.y}`, tile)
     }
   }
 
-  if (startX === -1) return false // No land tiles
+  if (landTiles.size === 0) return new Set()
 
-  // Flood fill to check connectivity
+  // Find all connected components
   const visited = new Set<string>()
-  const queue: Array<[number, number]> = [[startX, startY]]
-  visited.add(`${startX},${startY}`)
+  const components: Set<string>[] = []
 
-  while (queue.length > 0) {
-    const [x, y] = queue.shift()!
+  for (const [key, tile] of landTiles) {
+    if (!visited.has(key)) {
+      // Flood fill from this tile
+      const component = new Set<string>()
+      const queue: Array<[number, number]> = [[tile.x, tile.y]]
+      component.add(key)
+      visited.add(key)
 
-    // Check all 4 cardinal directions
-    for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
-      const nx = x + dx
-      const ny = y + dy
-      const key = `${nx},${ny}`
+      while (queue.length > 0) {
+        const [x, y] = queue.shift()!
 
-      if (!visited.has(key)) {
-        const tile = getTile(nx, ny, tiles)
-        if (tile && isNavigable(tile.type)) {
-          visited.add(key)
-          queue.push([nx, ny])
+        // Check all 4 cardinal directions
+        for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
+          const nx = x + dx
+          const ny = y + dy
+          const neighborKey = `${nx},${ny}`
+
+          if (!visited.has(neighborKey) && landTiles.has(neighborKey)) {
+            visited.add(neighborKey)
+            component.add(neighborKey)
+            queue.push([nx, ny])
+          }
         }
       }
+
+      components.push(component)
     }
   }
 
-  // Count all navigable tiles
-  let navigableCount = 0
-  for (const tile of tiles) {
-    if (isNavigable(tile.type)) navigableCount++
+  // Return the largest component
+  let largest = new Set<string>()
+  for (const component of components) {
+    if (component.size > largest.size) {
+      largest = component
+    }
   }
 
-  return visited.size === navigableCount
+  return largest
+}
+
+function ensureSingleIsland(tiles: Tile[]): Tile[] {
+  // Find the largest connected landmass
+  const island = findLargestConnectedComponent(tiles)
+
+  // Convert all other land tiles to water
+  return tiles.map(tile => {
+    if (isNavigable(tile.type) && !island.has(`${tile.x},${tile.y}`)) {
+      return { ...tile, type: TileType.Water, hasLog: false }
+    }
+    return tile
+  })
 }
 
 export function generateMap(seed: number): GridState {
-  let tiles: Tile[] = []
-  let isValid = false
-  let attempts = 0
-  const maxAttempts = 50
+  const tiles: Tile[] = []
+  const rng = new SeededRandom(seed)
 
-  // Keep generating until we get a connected island
-  while (!isValid && attempts < maxAttempts) {
-    tiles = []
-    const rng = new SeededRandom(seed + attempts)
+  // Generate base terrain using noise
+  for (let y = 0; y < C.MAP_HEIGHT; y++) {
+    for (let x = 0; x < C.MAP_WIDTH; x++) {
+      const noise = perlinNoise(x, y, seed)
+      let type = getTileType(noise)
 
-    // Generate island base layer
-    for (let y = 0; y < C.MAP_HEIGHT; y++) {
-      for (let x = 0; x < C.MAP_WIDTH; x++) {
-        const noise = perlinNoise(x, y, seed + attempts)
-        let type = getTileType(noise)
-
-        // Add some shore tiles between water and land
-        const isEdge = x < 3 || x > C.MAP_WIDTH - 4 || y < 3 || y > C.MAP_HEIGHT - 4
-        if (isEdge && type !== TileType.Water && type !== TileType.Mountain) {
-          if (rng.next() > 0.6) type = TileType.Shore
-        }
-
-        const hasLog = isNavigable(type) && shouldSpawnLog(type, rng)
-
-        tiles.push({
-          x,
-          y,
-          type,
-          hasLog,
-          isRevealed: false,
-        })
+      // Add some shore tiles between water and land (more natural coastlines)
+      const isEdge = x < 3 || x > C.MAP_WIDTH - 4 || y < 3 || y > C.MAP_HEIGHT - 4
+      if (isEdge && type !== TileType.Water && type !== TileType.Mountain) {
+        if (rng.next() > 0.6) type = TileType.Shore
       }
-    }
 
-    isValid = isAllLandConnected(tiles)
-    attempts++
+      const hasLog = isNavigable(type) && shouldSpawnLog(type, rng)
+
+      tiles.push({
+        x,
+        y,
+        type,
+        hasLog,
+        isRevealed: false,
+      })
+    }
   }
 
+  // Ensure only ONE connected island exists
+  // This keeps the largest landmass and converts all fragmented pieces to water
+  const processedTiles = ensureSingleIsland(tiles)
+
   const tilesMap = new Map<string, Tile>()
-  for (const tile of tiles) {
+  for (const tile of processedTiles) {
     tilesMap.set(`${tile.x},${tile.y}`, tile)
   }
 

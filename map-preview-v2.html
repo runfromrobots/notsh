@@ -530,9 +530,76 @@
             );
         }
 
+        function findLargestIsland(tiles) {
+            const landTiles = new Map();
+            for (const tile of tiles) {
+                if (['beach', 'jungle', 'shore'].includes(tile.type)) {
+                    landTiles.set(`${tile.x},${tile.y}`, tile);
+                }
+            }
+
+            if (landTiles.size === 0) return new Set();
+
+            // Find largest connected component using flood fill
+            const visited = new Set();
+            const components = [];
+
+            for (const [key, tile] of landTiles) {
+                if (!visited.has(key)) {
+                    const component = new Set();
+                    const queue = [[tile.x, tile.y]];
+                    component.add(key);
+                    visited.add(key);
+
+                    while (queue.length > 0) {
+                        const [x, y] = queue.shift();
+                        for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
+                            const nx = x + dx;
+                            const ny = y + dy;
+                            const neighborKey = `${nx},${ny}`;
+
+                            if (!visited.has(neighborKey) && landTiles.has(neighborKey)) {
+                                visited.add(neighborKey);
+                                component.add(neighborKey);
+                                queue.push([nx, ny]);
+                            }
+                        }
+                    }
+
+                    components.push(component);
+                }
+            }
+
+            // Return largest component
+            let largest = new Set();
+            for (const component of components) {
+                if (component.size > largest.size) {
+                    largest = component;
+                }
+            }
+
+            return largest;
+        }
+
+        function ensureSingleIsland(tiles) {
+            const island = findLargestIsland(tiles);
+
+            // Convert all other land tiles to water
+            return tiles.map(tile => {
+                if (['beach', 'jungle', 'shore'].includes(tile.type) && !island.has(`${tile.x},${tile.y}`)) {
+                    return { ...tile, type: 'water', hasLog: false };
+                }
+                return tile;
+            });
+        }
+
         function generateNewMap() {
             const seed = parseInt(document.getElementById('seedInput').value);
-            currentMap = generateMap(seed);
+            let tiles = generateMap(seed);
+
+            // Ensure only ONE connected island
+            tiles = ensureSingleIsland(tiles);
+            currentMap = tiles;
 
             // Set initial player position to spawn area
             const spawnTiles = getSpawnTiles(currentMap, playerFaction);
