@@ -93,7 +93,7 @@ export default function Lobby() {
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        <h1>Game Lobby</h1>
+        <h1 className={styles.title}>Game Lobby</h1>
 
         <div className={styles.codeSection}>
           <p className={styles.label}>Game Code</p>
@@ -107,7 +107,7 @@ export default function Lobby() {
         </div>
 
         <div className={styles.playersSection}>
-          <h2>Players</h2>
+          <h2 className={styles.subtitle}>Players</h2>
 
           <div className={styles.playersList}>
             <div className={styles.playerCard}>

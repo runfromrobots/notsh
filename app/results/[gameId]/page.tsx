@@ -63,7 +63,7 @@ export default function Results() {
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        <h1>Game Over!</h1>
+        <h1 className={styles.title}>Game Over!</h1>
 
         <div className={styles.summarySection}>
           <p className={styles.dayCount}>Lasted {game?.dayNumber} days</p>
@@ -74,7 +74,7 @@ export default function Results() {
 
         {rescuedPlayers.length > 0 && (
           <div className={styles.rescued}>
-            <h2>🎉 Rescued!</h2>
+            <h2 className={styles.subtitle}>🎉 Rescued!</h2>
             <div className={styles.playersList}>
               {rescuedPlayers.map((player) => (
                 <div key={player.id} className={styles.playerCard}>
@@ -91,7 +91,7 @@ export default function Results() {
 
         {eliminatedPlayers.length > 0 && (
           <div className={styles.eliminated}>
-            <h2>Eliminated</h2>
+            <h2 className={styles.subtitle}>Eliminated</h2>
             <div className={styles.playersList}>
               {eliminatedPlayers.map((player) => (
                 <div key={player.id} className={styles.playerCard + ' ' + styles.dead}>
