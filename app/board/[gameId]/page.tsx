@@ -375,6 +375,43 @@ export default function Board() {
             )}
           </div>
 
+          <div className={styles.movementControls}>
+            <button
+              onClick={() => handleMove(currentPlayer!.x, Math.max(0, currentPlayer!.y - 1))}
+              disabled={!isYourTurn}
+              className={styles.arrowBtn}
+              title="Move Up"
+            >
+              ▲
+            </button>
+            <div className={styles.arrowRow}>
+              <button
+                onClick={() => handleMove(Math.max(0, currentPlayer!.x - 1), currentPlayer!.y)}
+                disabled={!isYourTurn}
+                className={styles.arrowBtn}
+                title="Move Left"
+              >
+                ◀
+              </button>
+              <button
+                onClick={() => handleMove(Math.min(63, currentPlayer!.x + 1), currentPlayer!.y)}
+                disabled={!isYourTurn}
+                className={styles.arrowBtn}
+                title="Move Right"
+              >
+                ▶
+              </button>
+            </div>
+            <button
+              onClick={() => handleMove(currentPlayer!.x, Math.min(63, currentPlayer!.y + 1))}
+              disabled={!isYourTurn}
+              className={styles.arrowBtn}
+              title="Move Down"
+            >
+              ▼
+            </button>
+          </div>
+
           {isYourTurn && (
             <div className={styles.actions}>
               <button
