@@ -32,14 +32,14 @@ export default function Home() {
         setPassword('')
       } else {
         setPassword('')
-        alert('Incorrect password')
+        alert('Wrong password')
       }
     }
   }
 
   const handleCreateGame = async () => {
     if (!playerName.trim()) {
-      alert('Enter your name first!')
+      alert('Please enter your name')
       return
     }
 
@@ -55,20 +55,20 @@ export default function Home() {
       localStorage.setItem('playerName', playerName.trim())
       router.push(`/board/${data.gameId}`)
     } catch (error) {
-      alert('Error creating game')
+      alert('Error')
       setLoading(false)
     }
   }
 
   const handleJoinGame = async () => {
     if (!playerName.trim()) {
-      alert('Enter your name first!')
+      alert('Please enter your name')
       return
     }
 
     const code = gameCode.trim()
     if (!code) {
-      alert('Enter a game code!')
+      alert('Please enter code')
       return
     }
 
@@ -86,60 +86,28 @@ export default function Home() {
       localStorage.setItem('playerName', playerName.trim())
       router.push(`/board/${lookup.gameId}`)
     } catch (error) {
-      alert('Error joining game')
+      alert('Error')
       setLoading(false)
     }
   }
 
   if (!isAuthenticated) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>
-          <h1>Nothing To See Here</h1>
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyPress={handlePasswordSubmit}
-            autoFocus
-          />
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+        <h1>NOTHING TO SEE</h1>
+        <input type="password" placeholder="pwd" value={password} onChange={(e) => setPassword(e.target.value)} onKeyPress={handlePasswordSubmit} autoFocus />
       </div>
     )
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
-      <h1>SOS Island Survival</h1>
-      
-      <input
-        type="text"
-        placeholder="Enter your name"
-        value={playerName}
-        onChange={(e) => setPlayerName(e.target.value)}
-        maxLength={20}
-        disabled={loading}
-      />
-
+    <div style={{ padding: '2rem' }}>
+      <h1>SOS GAME v2</h1>
+      <input type="text" placeholder="name" value={playerName} onChange={(e) => setPlayerName(e.target.value)} maxLength={20} />
+      <button onClick={handleCreateGame}>Create</button>
       <div style={{ marginTop: '1rem' }}>
-        <button onClick={handleCreateGame} disabled={loading}>
-          Create Game
-        </button>
-      </div>
-
-      <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-        <input
-          type="text"
-          placeholder="Game code"
-          value={gameCode}
-          onChange={(e) => setGameCode(e.target.value.toUpperCase())}
-          maxLength={6}
-          disabled={loading}
-        />
-        <button onClick={handleJoinGame} disabled={loading}>
-          Join
-        </button>
+        <input type="text" placeholder="code" value={gameCode} onChange={(e) => setGameCode(e.target.value.toUpperCase())} maxLength={6} />
+        <button onClick={handleJoinGame}>Join</button>
       </div>
     </div>
   )
