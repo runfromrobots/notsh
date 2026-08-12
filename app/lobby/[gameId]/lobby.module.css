@@ -1,0 +1,180 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0D1117 0%, #1a1a2e 100%);
+  padding: 2rem;
+}
+
+.content {
+  max-width: 500px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+h1 {
+  font-size: 3rem;
+  color: #FF1744;
+  margin: 0;
+  text-shadow: 4px 4px 0px #FFD700, 8px 8px 0px rgba(255, 23, 68, 0.2);
+  text-align: center;
+}
+
+h2 {
+  font-size: 1.5rem;
+  color: #FFD700;
+  margin: 0 0 1rem 0;
+}
+
+.codeSection {
+  background: rgba(255, 23, 68, 0.1);
+  border: 2px solid #FF1744;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.label {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #00BCD4;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.codeSectionContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.code {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #FFD700;
+  font-family: monospace;
+  letter-spacing: 4px;
+}
+
+.copyBtn {
+  padding: 0.5rem 1rem;
+  background: #00BCD4;
+  color: #0D1117;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.copyBtn:hover {
+  background: #FFD700;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #FFFFFF;
+  opacity: 0.7;
+}
+
+.playersSection {
+  background: rgba(0, 188, 212, 0.1);
+  border: 2px solid #00BCD4;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.playersList {
+  display: grid;
+  gap: 1rem;
+}
+
+.playerCard {
+  background: rgba(13, 17, 23, 0.8);
+  border: 1px solid #FFD700;
+  border-radius: 6px;
+  padding: 1.5rem;
+  text-align: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.playerCard.waiting {
+  border-color: #00BCD4;
+  opacity: 0.6;
+}
+
+.playerName {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #FFFFFF;
+  font-weight: bold;
+}
+
+.faction {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+  color: #FFD700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.playerCard .status {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+  color: #00BCD4;
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.statusText {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.statusText.ready {
+  color: #00BCD4;
+}
+
+.statusText.waiting {
+  color: #FFD700;
+}
+
+.startBtn {
+  padding: 1rem 2rem;
+  background: #FF1744;
+  color: #FFFFFF;
+  border: 2px solid #FFD700;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.startBtn:hover {
+  background: #FFD700;
+  color: #0D1117;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

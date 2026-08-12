@@ -1,16 +1,27 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import styles from './page.module.css'
 
 const CORRECT_PASSWORD = 'lovesexsecretgod'
 
+interface Game {
+  id: string
+  code: string
+  playerCount: number
+  players: Array<{ id: string; name: string; faction: string }>
+}
+
 export default function Home() {
+  const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [password, setPassword] = useState('')
   const [playerName, setPlayerName] = useState('')
   const [gameCode, setGameCode] = useState('')
   const [showAbout, setShowAbout] = useState(false)
+  const [games, setGames] = useState<Game[]>([])
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const savedAuth = localStorage.getItem('sosGameAuth')
@@ -18,6 +29,27 @@ export default function Home() {
       setIsAuthenticated(true)
     }
   }, [])
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchGames()
+      // Poll for new games every 5 seconds
+      const interval = setInterval(fetchGames, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [isAuthenticated])
+
+  const fetchGames = async () => {
+    try {
+      const res = await fetch('/api/games/list?status=waiting')
+      if (res.ok) {
+        const data = await res.json()
+        setGames(data.games || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch games:', error)
+    }
+  }
 
   const handlePasswordSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -32,24 +64,77 @@ export default function Home() {
     }
   }
 
-  const handleCreateGame = () => {
+  const handleCreateGame = async () => {
     if (!playerName.trim()) {
       alert('Enter your name first!')
       return
     }
-    // TODO: Create game via API and navigate
+
+    setLoading(true)
+    try {
+      const res = await fetch('/api/games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerName: playerName.trim() }),
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        alert(`Failed to create game: ${error.error}`)
+        setLoading(false)
+        return
+      }
+
+      const data = await res.json()
+      const gameId = data.gameId
+
+      // Store player name and navigate to lobby
+      localStorage.setItem('playerName', playerName.trim())
+      router.push(`/lobby/${gameId}`)
+    } catch (error) {
+      console.error('Error creating game:', error)
+      alert('Failed to create game')
+      setLoading(false)
+    }
   }
 
-  const handleJoinGame = () => {
+  const handleJoinGame = async (gameIdToJoin?: string) => {
     if (!playerName.trim()) {
       alert('Enter your name first!')
       return
     }
-    if (!gameCode.trim()) {
+
+    const targetGameId = gameIdToJoin || gameCode.trim()
+    if (!targetGameId) {
       alert('Enter a game code!')
       return
     }
-    // TODO: Join game via API and navigate
+
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/games/${targetGameId}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerName: playerName.trim() }),
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        alert(`Failed to join game: ${error.error}`)
+        setLoading(false)
+        return
+      }
+
+      const data = await res.json()
+
+      // Store player name and navigate to lobby
+      localStorage.setItem('playerName', playerName.trim())
+      router.push(`/lobby/${targetGameId}`)
+    } catch (error) {
+      console.error('Error joining game:', error)
+      alert('Failed to join game')
+      setLoading(false)
+    }
   }
 
   if (!isAuthenticated) {
@@ -129,6 +214,7 @@ export default function Home() {
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
             maxLength={20}
+            disabled={loading}
           />
         </div>
 
@@ -136,8 +222,9 @@ export default function Home() {
           <button
             onClick={handleCreateGame}
             className={styles.primaryBtn}
+            disabled={loading}
           >
-            Create Game
+            {loading ? 'Starting...' : 'Create Game'}
           </button>
 
           <div className={styles.joinSection}>
@@ -145,13 +232,43 @@ export default function Home() {
               type="text"
               placeholder="Game code"
               value={gameCode}
-              onChange={(e) => setGameCode(e.target.value)}
+              onChange={(e) => setGameCode(e.target.value.toUpperCase())}
               onKeyPress={(e) => e.key === 'Enter' && handleJoinGame()}
               maxLength={6}
+              disabled={loading}
             />
-            <button onClick={handleJoinGame}>Join</button>
+            <button onClick={() => handleJoinGame()} disabled={loading}>
+              Join
+            </button>
           </div>
         </div>
+
+        {/* Game List */}
+        {games.length > 0 && (
+          <div className={styles.gamesList}>
+            <h3>Available Games</h3>
+            <div className={styles.gamesGrid}>
+              {games.map((game) => (
+                <div key={game.id} className={styles.gameCard}>
+                  <p className={styles.gameCode}>Code: {game.code}</p>
+                  <p className={styles.playerCount}>{game.playerCount}/2 players</p>
+                  {game.players.length > 0 && (
+                    <p className={styles.gamePlayer}>
+                      Playing: {game.players[0].name}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => handleJoinGame(game.id)}
+                    className={styles.joinGameBtn}
+                    disabled={loading}
+                  >
+                    Join
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Tattoo Art Placeholder - Bottom Left */}
