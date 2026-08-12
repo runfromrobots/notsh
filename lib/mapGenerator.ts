@@ -161,21 +161,15 @@ export function generateMap(seed: number): GridState {
         // Water
         type = TileType.Water
       } else {
-        // Check if this is a shore tile (close to water)
-        let distToWater = Infinity
-        for (let dy = -shoreThickness; dy <= shoreThickness; dy++) {
-          for (let dx = -shoreThickness; dx <= shoreThickness; dx++) {
-            const nx = x + dx
-            const ny = y + dy
-            if (!islandTiles.has(`${nx},${ny}`)) {
-              const d = Math.sqrt(dx * dx + dy * dy)
-              distToWater = Math.min(distToWater, d)
-            }
-          }
-        }
+        // Check if this is a shore tile by distance from center
+        const dx = x - centerX
+        const dy = y - centerY
+        const distFromCenter = Math.sqrt(dx * dx + dy * dy)
+        const noise = perlinNoise(x, y, seed)
+        const adjustedRadius = islandRadius + (noise - 0.5) * 4
 
-        if (distToWater <= shoreThickness) {
-          // SHORE RING: 5 tiles thick of beach
+        // SHORE RING: closest 5 tiles to the edge
+        if (distFromCenter > adjustedRadius - shoreThickness) {
           type = TileType.Beach
         } else {
           // INTERIOR: Jungle with large mountain ranges
