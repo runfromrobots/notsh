@@ -3,7 +3,6 @@ import { getGame, getPlayers, getTile, updatePlayer, updateTile, recordMove, upd
 import { generateMap } from '@/lib/mapGenerator'
 import { processMove } from '@/lib/gameLogic'
 import { Faction, MoveType, GameStatus } from '@/lib/types'
-import { v4 as uuidv4 } from 'crypto'
 
 export async function POST(
   request: NextRequest,
