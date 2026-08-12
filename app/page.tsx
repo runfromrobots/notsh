@@ -67,7 +67,7 @@ export default function Home() {
     }
   }
 
-  const handleCreateGame = async () => {
+  const handleCreateGame = async (solo: boolean = false) => {
     if (!playerName.trim()) {
       alert('Enter your name first!')
       return
@@ -78,7 +78,7 @@ export default function Home() {
       const res = await fetch('/api/games', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerName: playerName.trim() }),
+        body: JSON.stringify({ playerName: playerName.trim(), soloMode: solo }),
       })
 
       if (!res.ok) {
@@ -274,13 +274,24 @@ export default function Home() {
         </div>
 
         <div className={styles.actions}>
-          <button
-            onClick={handleCreateGame}
-            className={styles.primaryBtn}
-            disabled={loading}
-          >
-            {loading ? 'Starting...' : 'Create Game'}
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <button
+              onClick={() => handleCreateGame(true)}
+              className={styles.primaryBtn}
+              disabled={loading}
+              style={{ flex: 1 }}
+            >
+              {loading ? 'Starting...' : 'Solo Game'}
+            </button>
+            <button
+              onClick={() => handleCreateGame(false)}
+              className={styles.primaryBtn}
+              disabled={loading}
+              style={{ flex: 1 }}
+            >
+              {loading ? 'Starting...' : 'Multiplayer'}
+            </button>
+          </div>
 
           <div className={styles.joinSection}>
             <input
