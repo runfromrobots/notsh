@@ -47,25 +47,23 @@ function getTile(x: number, y: number, tiles: Tile[]): Tile | null {
   return tiles[y * C.MAP_WIDTH + x] || null
 }
 
-function findLargestConnectedComponent(tiles: Tile[]): Set<string> {
-  const landTiles = new Map<string, Tile>()
+function findLargestLandmass(tiles: Tile[]): Set<string> {
+  const tilesMap = new Map<string, Tile>()
 
-  // Index all navigable tiles
+  // Index all tiles by position
   for (const tile of tiles) {
-    if (isNavigable(tile.type)) {
-      landTiles.set(`${tile.x},${tile.y}`, tile)
-    }
+    tilesMap.set(`${tile.x},${tile.y}`, tile)
   }
 
-  if (landTiles.size === 0) return new Set()
-
-  // Find all connected components
+  // Find all connected components using navigable + mountain tiles
   const visited = new Set<string>()
   const components: Set<string>[] = []
 
-  for (const [key, tile] of landTiles) {
-    if (!visited.has(key)) {
-      // Flood fill from this tile
+  for (const tile of tiles) {
+    const key = `${tile.x},${tile.y}`
+
+    // Start component from any land tile (navigable or mountain)
+    if (!visited.has(key) && (isNavigable(tile.type) || tile.type === TileType.Mountain)) {
       const component = new Set<string>()
       const queue: Array<[number, number]> = [[tile.x, tile.y]]
       component.add(key)
@@ -80,10 +78,14 @@ function findLargestConnectedComponent(tiles: Tile[]): Set<string> {
           const ny = y + dy
           const neighborKey = `${nx},${ny}`
 
-          if (!visited.has(neighborKey) && landTiles.has(neighborKey)) {
-            visited.add(neighborKey)
-            component.add(neighborKey)
-            queue.push([nx, ny])
+          if (!visited.has(neighborKey)) {
+            const neighbor = tilesMap.get(neighborKey)
+            // Include navigable tiles and mountains in connectivity
+            if (neighbor && (isNavigable(neighbor.type) || neighbor.type === TileType.Mountain)) {
+              visited.add(neighborKey)
+              component.add(neighborKey)
+              queue.push([nx, ny])
+            }
           }
         }
       }
@@ -92,7 +94,7 @@ function findLargestConnectedComponent(tiles: Tile[]): Set<string> {
     }
   }
 
-  // Return the largest component
+  // Return the largest landmass
   let largest = new Set<string>()
   for (const component of components) {
     if (component.size > largest.size) {
@@ -104,12 +106,13 @@ function findLargestConnectedComponent(tiles: Tile[]): Set<string> {
 }
 
 function ensureSingleIsland(tiles: Tile[]): Tile[] {
-  // Find the largest connected landmass
-  const island = findLargestConnectedComponent(tiles)
+  // Find the largest connected landmass (navigable + mountains)
+  const island = findLargestLandmass(tiles)
 
-  // Convert all other land tiles to water
+  // Convert all other tiles to water (both navigable land and mountains)
   return tiles.map(tile => {
-    if (isNavigable(tile.type) && !island.has(`${tile.x},${tile.y}`)) {
+    const key = `${tile.x},${tile.y}`
+    if ((isNavigable(tile.type) || tile.type === TileType.Mountain) && !island.has(key)) {
       return { ...tile, type: TileType.Water, hasLog: false }
     }
     return tile

@@ -34,7 +34,7 @@ export const TURN_TIME_LIMIT = 300000 // 5 minutes per turn
 export const MOVE_ANIMATION_DURATION = 200
 
 // Tile generation
-export const WATER_COVERAGE = 0.4 // 40% water
-export const MOUNTAIN_COVERAGE = 0.15 // 15% mountains
-export const JUNGLE_COVERAGE = 0.35 // 35% jungle
-export const BEACH_COVERAGE = 0.1 // 10% beach
+export const WATER_COVERAGE = 0.08 // 8% water
+export const MOUNTAIN_COVERAGE = 0.12 // 12% mountains
+export const JUNGLE_COVERAGE = 0.60 // 60% jungle
+export const BEACH_COVERAGE = 0.20 // 20% beach

@@ -235,10 +235,10 @@
         };
 
         const COVERAGE = {
-            water: 0.35,
+            water: 0.08,
             mountain: 0.12,
-            beach: 0.08,
-            jungle: 0.40,
+            beach: 0.20,
+            jungle: 0.60,
         };
 
         const MAP_WIDTH = 64;
@@ -442,12 +442,6 @@
                 ctx.strokeStyle = '#333333';
                 ctx.lineWidth = 0.5;
                 ctx.strokeRect(x, y, FULL_MAP_TILE_SIZE, FULL_MAP_TILE_SIZE);
-
-                // Draw log indicator
-                if (tile.hasLog) {
-                    ctx.fillStyle = '#FFD700';
-                    ctx.fillRect(x + 1, y + 1, FULL_MAP_TILE_SIZE - 2, FULL_MAP_TILE_SIZE - 2);
-                }
             }
 
             // Draw spawn zones
