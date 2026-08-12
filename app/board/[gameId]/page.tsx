@@ -64,7 +64,6 @@ export default function Board() {
   const [showCoinFlip, setShowCoinFlip] = useState(false)
   const [coinFlipping, setCoinFlipping] = useState(false)
   const [coinResult, setCoinResult] = useState<'heads' | 'tails' | null>(null)
-  const [playerChoice, setPlayerChoice] = useState<'heads' | 'tails' | null>(null)
 
   useEffect(() => {
     const name = localStorage.getItem('playerName')
@@ -340,7 +339,6 @@ export default function Board() {
 
   const handleCoinFlip = async (choice: 'heads' | 'tails') => {
     console.log('[CoinFlip] User chose:', choice)
-    setPlayerChoice(choice)
     setCoinFlipping(true)
 
     // Simulate coin flip animation
