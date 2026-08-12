@@ -7,6 +7,7 @@ const CORRECT_PASSWORD = 'lovesexsecretgod'
 
 export default function Home() {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [password, setPassword] = useState('')
   const [playerName, setPlayerName] = useState('')
@@ -14,11 +15,14 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const savedAuth = localStorage.getItem('sosGameAuth')
     if (savedAuth === 'true') {
       setIsAuthenticated(true)
     }
   }, [])
+
+  if (!mounted) return null
 
   const handlePasswordSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -47,17 +51,11 @@ export default function Home() {
         body: JSON.stringify({ playerName: playerName.trim() }),
       })
 
-      if (!res.ok) {
-        alert('Failed to create game')
-        setLoading(false)
-        return
-      }
-
       const data = await res.json()
       localStorage.setItem('playerName', playerName.trim())
       router.push(`/board/${data.gameId}`)
     } catch (error) {
-      alert('Failed to create game')
+      alert('Error creating game')
       setLoading(false)
     }
   }
@@ -77,31 +75,18 @@ export default function Home() {
     setLoading(true)
     try {
       const lookupRes = await fetch(`/api/games/lookup?code=${code}`)
-      if (!lookupRes.ok) {
-        alert('Game not found')
-        setLoading(false)
-        return
-      }
-
       const lookup = await lookupRes.json()
-      const gameId = lookup.gameId
 
-      const res = await fetch(`/api/games/${gameId}/join`, {
+      const res = await fetch(`/api/games/${lookup.gameId}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ playerName: playerName.trim() }),
       })
 
-      if (!res.ok) {
-        alert('Failed to join game')
-        setLoading(false)
-        return
-      }
-
       localStorage.setItem('playerName', playerName.trim())
-      router.push(`/board/${gameId}`)
+      router.push(`/board/${lookup.gameId}`)
     } catch (error) {
-      alert('Failed to join game')
+      alert('Error joining game')
       setLoading(false)
     }
   }
@@ -128,20 +113,18 @@ export default function Home() {
     <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
       <h1>SOS Island Survival</h1>
       
-      <div>
-        <input
-          type="text"
-          placeholder="Enter your name"
-          value={playerName}
-          onChange={(e) => setPlayerName(e.target.value)}
-          maxLength={20}
-          disabled={loading}
-        />
-      </div>
+      <input
+        type="text"
+        placeholder="Enter your name"
+        value={playerName}
+        onChange={(e) => setPlayerName(e.target.value)}
+        maxLength={20}
+        disabled={loading}
+      />
 
       <div style={{ marginTop: '1rem' }}>
         <button onClick={handleCreateGame} disabled={loading}>
-          {loading ? 'Starting...' : 'Create Game'}
+          Create Game
         </button>
       </div>
 
@@ -151,7 +134,6 @@ export default function Home() {
           placeholder="Game code"
           value={gameCode}
           onChange={(e) => setGameCode(e.target.value.toUpperCase())}
-          onKeyPress={(e) => e.key === 'Enter' && handleJoinGame()}
           maxLength={6}
           disabled={loading}
         />
