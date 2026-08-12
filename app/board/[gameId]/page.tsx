@@ -60,7 +60,6 @@ export default function Board() {
   const [playerName, setPlayerName] = useState('')
   const [loading, setLoading] = useState(true)
   const [selectedAction, setSelectedAction] = useState<'move' | 'place-log' | null>(null)
-  const [showRPSModal, setShowRPSModal] = useState(false)
   const [showRescueModal, setShowRescueModal] = useState(false)
   const [showCoinFlip, setShowCoinFlip] = useState(false)
   const [coinFlipping, setCoinFlipping] = useState(false)
@@ -496,17 +495,6 @@ export default function Board() {
           )}
         </div>
       </div>
-
-      {/* RPS Modal */}
-      {showRPSModal && (
-        <div className={styles.modal}>
-          <div className={styles.modalContent}>
-            <h2>Rock Paper Scissors!</h2>
-            <p>You encountered an opponent!</p>
-            {/* RPS will be implemented next */}
-          </div>
-        </div>
-      )}
 
       {/* Rescue Modal */}
       {showRescueModal && (
