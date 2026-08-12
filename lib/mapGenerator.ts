@@ -42,40 +42,105 @@ function shouldSpawnLog(type: TileType, rng: SeededRandom): boolean {
   return false
 }
 
-export function generateMap(seed: number): GridState {
-  const tiles = new Map<string, Tile>()
-  const rng = new SeededRandom(seed)
+function getTile(x: number, y: number, tiles: Tile[]): Tile | null {
+  if (x < 0 || x >= C.MAP_WIDTH || y < 0 || y >= C.MAP_HEIGHT) return null
+  return tiles[y * C.MAP_WIDTH + x] || null
+}
 
-  // Generate island base layer
-  for (let y = 0; y < C.MAP_HEIGHT; y++) {
-    for (let x = 0; x < C.MAP_WIDTH; x++) {
-      const noise = perlinNoise(x, y, seed)
-      const type = getTileType(noise)
-
-      // Add some shore tiles between water and land
-      const isEdge = x < 3 || x > C.MAP_WIDTH - 4 || y < 3 || y > C.MAP_HEIGHT - 4
-      let finalType = type
-      if (isEdge && type !== TileType.Water && type !== TileType.Mountain) {
-        if (rng.next() > 0.6) finalType = TileType.Shore
-      }
-
-      const hasLog = isNavigable(finalType) && shouldSpawnLog(finalType, rng)
-
-      const key = `${x},${y}`
-      tiles.set(key, {
-        x,
-        y,
-        type: finalType,
-        hasLog,
-        isRevealed: false,
-      })
+function isAllLandConnected(tiles: Tile[]): boolean {
+  // Find first navigable tile
+  let startX = -1, startY = -1
+  for (const tile of tiles) {
+    if (isNavigable(tile.type)) {
+      startX = tile.x
+      startY = tile.y
+      break
     }
+  }
+
+  if (startX === -1) return false // No land tiles
+
+  // Flood fill to check connectivity
+  const visited = new Set<string>()
+  const queue: Array<[number, number]> = [[startX, startY]]
+  visited.add(`${startX},${startY}`)
+
+  while (queue.length > 0) {
+    const [x, y] = queue.shift()!
+
+    // Check all 4 cardinal directions
+    for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
+      const nx = x + dx
+      const ny = y + dy
+      const key = `${nx},${ny}`
+
+      if (!visited.has(key)) {
+        const tile = getTile(nx, ny, tiles)
+        if (tile && isNavigable(tile.type)) {
+          visited.add(key)
+          queue.push([nx, ny])
+        }
+      }
+    }
+  }
+
+  // Count all navigable tiles
+  let navigableCount = 0
+  for (const tile of tiles) {
+    if (isNavigable(tile.type)) navigableCount++
+  }
+
+  return visited.size === navigableCount
+}
+
+export function generateMap(seed: number): GridState {
+  let tiles: Tile[] = []
+  let isValid = false
+  let attempts = 0
+  const maxAttempts = 50
+
+  // Keep generating until we get a connected island
+  while (!isValid && attempts < maxAttempts) {
+    tiles = []
+    const rng = new SeededRandom(seed + attempts)
+
+    // Generate island base layer
+    for (let y = 0; y < C.MAP_HEIGHT; y++) {
+      for (let x = 0; x < C.MAP_WIDTH; x++) {
+        const noise = perlinNoise(x, y, seed + attempts)
+        let type = getTileType(noise)
+
+        // Add some shore tiles between water and land
+        const isEdge = x < 3 || x > C.MAP_WIDTH - 4 || y < 3 || y > C.MAP_HEIGHT - 4
+        if (isEdge && type !== TileType.Water && type !== TileType.Mountain) {
+          if (rng.next() > 0.6) type = TileType.Shore
+        }
+
+        const hasLog = isNavigable(type) && shouldSpawnLog(type, rng)
+
+        tiles.push({
+          x,
+          y,
+          type,
+          hasLog,
+          isRevealed: false,
+        })
+      }
+    }
+
+    isValid = isAllLandConnected(tiles)
+    attempts++
+  }
+
+  const tilesMap = new Map<string, Tile>()
+  for (const tile of tiles) {
+    tilesMap.set(`${tile.x},${tile.y}`, tile)
   }
 
   return {
     width: C.MAP_WIDTH,
     height: C.MAP_HEIGHT,
-    tiles,
+    tiles: tilesMap,
     seed,
   }
 }

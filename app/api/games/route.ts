@@ -53,11 +53,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Spawn player on map
+    // Spawn player on map (Pirates spawn in Northeast)
+    // Only spawn on navigable land tiles (Beach, Jungle, Shore - not Water or Mountain)
+    const navigableTiles = new Set(['beach', 'jungle', 'shore'])
     const spawnTiles = tilesArray.filter(
       (tile) =>
-        tile.x > 32 && tile.y < 14 &&
-        (tile.type === 'beach' || tile.type === 'jungle' || tile.type === 'shore')
+        tile.x > 32 &&
+        tile.y < 14 &&
+        navigableTiles.has(tile.type)
     )
 
     if (spawnTiles.length > 0) {

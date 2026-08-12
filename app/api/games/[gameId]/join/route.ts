@@ -62,17 +62,17 @@ export async function POST(
 
     // If this is the second player, spawn them on map
     if (players.length === 1) {
-      const allPlayers = [...players, savedPlayer]
-
-      // Generate map and spawn players
       const mapData = generateMapData(game.mapSeed)
       const tilesArray = Array.from(mapData.tiles.values())
 
-      // Spawn second player (Navy side)
+      // Spawn second player (Navy side, Southwest quadrant)
+      // Only spawn on navigable land tiles (Beach, Jungle, Shore - not Water or Mountain)
+      const navigableTiles = new Set(['beach', 'jungle', 'shore'])
       const spawnTiles = tilesArray.filter(
         (tile) =>
-          tile.x < 32 && tile.y > 34 &&
-          (tile.type === 'beach' || tile.type === 'jungle' || tile.type === 'shore')
+          tile.x < 32 &&
+          tile.y > 34 &&
+          navigableTiles.has(tile.type)
       )
 
       if (spawnTiles.length > 0) {

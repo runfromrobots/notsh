@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOS Island Map Preview - Connected Island</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0D1117;
+            color: #FFFFFF;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            background: #1a1a2e;
+            border: 2px solid #00BCD4;
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #FF1744;
+            text-shadow: 2px 2px 0px #FFD700;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        input[type="number"] {
+            padding: 0.5rem;
+            background: #0D1117;
+            border: 1px solid #00BCD4;
+            color: #FFFFFF;
+            border-radius: 4px;
+            width: 150px;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            background: #FF1744;
+            color: #FFFFFF;
+            border: 2px solid #FFD700;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #FFD700;
+            color: #0D1117;
+        }
+
+        button.active {
+            background: #00BCD4;
+            border-color: #FFFFFF;
+        }
+
+        .maps-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .map-section {
+            border: 1px solid #333;
+            padding: 1rem;
+            background: #000;
+            border-radius: 4px;
+        }
+
+        .map-section h2 {
+            font-size: 1.1rem;
+            color: #FFD700;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        canvas {
+            border: 2px solid #00BCD4;
+            max-width: 100%;
+            height: auto;
+            image-rendering: pixelated;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #555;
+            border-radius: 2px;
+        }
+
+        .info {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #FFD700;
+            text-align: center;
+        }
+
+        .player-controls {
+            text-align: center;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 1024px) {
+            .maps-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏝️ SOS Island Map Preview - Connected Island</h1>
+
+        <div class="controls">
+            <label for="seedInput">Map Seed:</label>
+            <input type="number" id="seedInput" value="12345" min="0" max="999999">
+            <button onclick="generateNewMap()">Generate Map</button>
+            <button onclick="generateRandomMap()" style="background: #00BCD4; border-color: #FFFFFF;">Random Seed</button>
+            <button id="pirateBtn" class="active" onclick="setPlayerFaction('pirates')">👨‍✈️ Pirates View</button>
+            <button id="navyBtn" onclick="setPlayerFaction('navy')">⚓ Navy View</button>
+        </div>
+
+        <div class="player-controls">
+            <p>Click on the full map to move the player. Current Position: <span id="playerPos">(0, 0)</span></p>
+        </div>
+
+        <div class="maps-container">
+            <div class="map-section">
+                <h2>Full Island (Unrevealed)</h2>
+                <div class="canvas-container">
+                    <canvas id="fullMapCanvas" width="320" height="240"></canvas>
+                </div>
+            </div>
+
+            <div class="map-section">
+                <h2>Player Viewport (20x15 tiles)</h2>
+                <div class="canvas-container">
+                    <canvas id="viewportCanvas" width="200" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #1e6b9e;"></div>
+                <span>Water (Impassable)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #5a4d3a;"></div>
+                <span>Mountains (Impassable)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #c9a961;"></div>
+                <span>Beach (Traversable)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #2d5a2d;"></div>
+                <span>Jungle (Traversable)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #7a8fa3;"></div>
+                <span>Shore (Traversable)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FFD700; border: 1px solid #888;"></div>
+                <span>Log Spawn</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #1a1a2e; border: 2px solid #FFD700;"></div>
+                <span>Fog of War</span>
+            </div>
+        </div>
+
+        <div class="info">
+            <p>Map Size: 64x48 tiles | Only ONE connected landmass | Players only spawn on land</p>
+            <p>Red zone = Pirates spawn area (NE) | Blue zone = Navy spawn area (SW)</p>
+        </div>
+    </div>
+
+    <script>
+        const TILE_COLORS = {
+            water: '#1e6b9e',
+            mountain: '#5a4d3a',
+            jungle: '#2d5a2d',
+            beach: '#c9a961',
+            shore: '#7a8fa3',
+        };
+
+        const COVERAGE = {
+            water: 0.35,
+            mountain: 0.12,
+            beach: 0.08,
+            jungle: 0.40,
+        };
+
+        const MAP_WIDTH = 64;
+        const MAP_HEIGHT = 48;
+        const VIEWPORT_WIDTH = 20;
+        const VIEWPORT_HEIGHT = 15;
+        const FULL_MAP_TILE_SIZE = 5;
+        const VIEWPORT_TILE_SIZE = 10;
+
+        const LOG_SPAWN_CHANCE = {
+            jungle: 0.4,
+            beach: 0.15,
+        };
+
+        let currentMap = [];
+        let playerPos = { x: 32, y: 24 };
+        let playerFaction = 'pirates';
+        let revealedTiles = new Set();
+
+        class SeededRandom {
+            constructor(seed) {
+                this.seed = seed;
+            }
+
+            next() {
+                this.seed = (this.seed * 9301 + 49297) % 233280;
+                return this.seed / 233280;
+            }
+        }
+
+        function perlinNoise(x, y, seed) {
+            const rng = new SeededRandom(seed + x * 73856093 ^ y * 19349663);
+            return rng.next();
+        }
+
+        function getTileType(noise) {
+            if (noise < COVERAGE.water) return 'water';
+            if (noise < COVERAGE.water + COVERAGE.mountain) return 'mountain';
+            if (noise < COVERAGE.water + COVERAGE.mountain + COVERAGE.beach) return 'beach';
+            if (noise < COVERAGE.water + COVERAGE.mountain + COVERAGE.beach + COVERAGE.jungle) return 'jungle';
+            return 'shore';
+        }
+
+        function isNavigable(type) {
+            return type !== 'water' && type !== 'mountain';
+        }
+
+        function getTile(x, y, tiles) {
+            if (x < 0 || x >= MAP_WIDTH || y < 0 || y >= MAP_HEIGHT) return null;
+            return tiles[y * MAP_WIDTH + x];
+        }
+
+        function isConnected(tiles) {
+            // Find first land tile
+            let startX = -1, startY = -1;
+            for (let i = 0; i < tiles.length; i++) {
+                if (isNavigable(tiles[i].type)) {
+                    startX = tiles[i].x;
+                    startY = tiles[i].y;
+                    break;
+                }
+            }
+
+            if (startX === -1) return false; // No land tiles
+
+            // Flood fill to check connectivity
+            const visited = new Set();
+            const queue = [[startX, startY]];
+            visited.add(`${startX},${startY}`);
+
+            while (queue.length > 0) {
+                const [x, y] = queue.shift();
+
+                for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    const key = `${nx},${ny}`;
+
+                    if (!visited.has(key)) {
+                        const tile = getTile(nx, ny, tiles);
+                        if (tile && isNavigable(tile.type)) {
+                            visited.add(key);
+                            queue.push([nx, ny]);
+                        }
+                    }
+                }
+            }
+
+            // Count all navigable tiles
+            let navigableCount = 0;
+            for (const tile of tiles) {
+                if (isNavigable(tile.type)) navigableCount++;
+            }
+
+            return visited.size === navigableCount;
+        }
+
+        function generateMap(seed) {
+            let tiles;
+            let attempts = 0;
+            const maxAttempts = 50;
+
+            do {
+                tiles = [];
+                const rng = new SeededRandom(seed + attempts);
+
+                for (let y = 0; y < MAP_HEIGHT; y++) {
+                    for (let x = 0; x < MAP_WIDTH; x++) {
+                        const noise = perlinNoise(x, y, seed + attempts);
+                        let type = getTileType(noise);
+
+                        // Add shore tiles at edges
+                        const isEdge = x < 3 || x > MAP_WIDTH - 4 || y < 3 || y > MAP_HEIGHT - 4;
+                        if (isEdge && type !== 'water' && type !== 'mountain') {
+                            if (rng.next() > 0.6) type = 'shore';
+                        }
+
+                        const hasLog = isNavigable(type) && rng.next() < LOG_SPAWN_CHANCE[type];
+
+                        tiles.push({
+                            x,
+                            y,
+                            type,
+                            hasLog,
+                        });
+                    }
+                }
+
+                attempts++;
+            } while (!isConnected(tiles) && attempts < maxAttempts);
+
+            return tiles;
+        }
+
+        function getSpawnTiles(tiles, faction) {
+            return tiles.filter(tile => {
+                if (!isNavigable(tile.type)) return false;
+
+                if (faction === 'pirates') {
+                    // Northeast quadrant: x > 32, y < 14
+                    return tile.x > 32 && tile.y < 14;
+                } else {
+                    // Southwest quadrant: x < 32, y > 34
+                    return tile.x < 32 && tile.y > 34;
+                }
+            });
+        }
+
+        function revealTiles(centerX, centerY, tiles) {
+            revealedTiles.clear();
+
+            // Reveal 1-tile radius around player
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    const x = centerX + dx;
+                    const y = centerY + dy;
+                    if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
+                        revealedTiles.add(`${x},${y}`);
+                    }
+                }
+            }
+        }
+
+        function renderFullMap(seed) {
+            const canvas = document.getElementById('fullMapCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Clear canvas
+            ctx.fillStyle = '#0D1117';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw tiles
+            for (const tile of currentMap) {
+                const x = tile.x * FULL_MAP_TILE_SIZE;
+                const y = tile.y * FULL_MAP_TILE_SIZE;
+
+                ctx.fillStyle = TILE_COLORS[tile.type];
+                ctx.fillRect(x, y, FULL_MAP_TILE_SIZE, FULL_MAP_TILE_SIZE);
+
+                // Draw grid
+                ctx.strokeStyle = '#333333';
+                ctx.lineWidth = 0.5;
+                ctx.strokeRect(x, y, FULL_MAP_TILE_SIZE, FULL_MAP_TILE_SIZE);
+
+                // Draw log indicator
+                if (tile.hasLog) {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(x + 1, y + 1, FULL_MAP_TILE_SIZE - 2, FULL_MAP_TILE_SIZE - 2);
+                }
+            }
+
+            // Draw spawn zones
+            ctx.fillStyle = 'rgba(255, 23, 68, 0.2)';
+            ctx.fillRect(33 * FULL_MAP_TILE_SIZE, 0, 31 * FULL_MAP_TILE_SIZE, 14 * FULL_MAP_TILE_SIZE);
+
+            ctx.fillStyle = 'rgba(0, 188, 212, 0.2)';
+            ctx.fillRect(0, 35 * FULL_MAP_TILE_SIZE, 32 * FULL_MAP_TILE_SIZE, 13 * FULL_MAP_TILE_SIZE);
+
+            // Draw player
+            const px = playerPos.x * FULL_MAP_TILE_SIZE + FULL_MAP_TILE_SIZE / 2;
+            const py = playerPos.y * FULL_MAP_TILE_SIZE + FULL_MAP_TILE_SIZE / 2;
+            ctx.fillStyle = playerFaction === 'pirates' ? '#FF1744' : '#00BCD4';
+            ctx.beginPath();
+            ctx.arc(px, py, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Click handler for full map
+            canvas.onclick = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = Math.floor((e.clientX - rect.left) / FULL_MAP_TILE_SIZE);
+                const y = Math.floor((e.clientY - rect.top) / FULL_MAP_TILE_SIZE);
+                if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
+                    playerPos = { x, y };
+                    revealTiles(playerPos.x, playerPos.y, currentMap);
+                    document.getElementById('playerPos').textContent = `(${playerPos.x}, ${playerPos.y})`;
+                    renderFullMap(0);
+                    renderViewport();
+                }
+            };
+        }
+
+        function renderViewport() {
+            const canvas = document.getElementById('viewportCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Clear canvas
+            ctx.fillStyle = '#0D1117';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const centerX = playerPos.x;
+            const centerY = playerPos.y;
+            const startX = Math.max(0, centerX - Math.floor(VIEWPORT_WIDTH / 2));
+            const startY = Math.max(0, centerY - Math.floor(VIEWPORT_HEIGHT / 2));
+
+            // Draw viewport tiles
+            for (let vy = 0; vy < VIEWPORT_HEIGHT; vy++) {
+                for (let vx = 0; vx < VIEWPORT_WIDTH; vx++) {
+                    const mapX = startX + vx;
+                    const mapY = startY + vy;
+                    const canvasX = vx * VIEWPORT_TILE_SIZE;
+                    const canvasY = vy * VIEWPORT_TILE_SIZE;
+
+                    const tile = getTile(mapX, mapY, currentMap);
+                    if (!tile) {
+                        ctx.fillStyle = '#1a1a2e'; // Out of bounds
+                        ctx.fillRect(canvasX, canvasY, VIEWPORT_TILE_SIZE, VIEWPORT_TILE_SIZE);
+                        continue;
+                    }
+
+                    const isRevealed = revealedTiles.has(`${mapX},${mapY}`);
+
+                    if (isRevealed) {
+                        ctx.fillStyle = TILE_COLORS[tile.type];
+                        ctx.fillRect(canvasX, canvasY, VIEWPORT_TILE_SIZE, VIEWPORT_TILE_SIZE);
+
+                        // Draw log indicator
+                        if (tile.hasLog) {
+                            ctx.fillStyle = '#FFD700';
+                            ctx.fillRect(canvasX + 2, canvasY + 2, VIEWPORT_TILE_SIZE - 4, VIEWPORT_TILE_SIZE - 4);
+                        }
+                    } else {
+                        // Fog of war
+                        ctx.fillStyle = '#1a1a2e';
+                        ctx.fillRect(canvasX, canvasY, VIEWPORT_TILE_SIZE, VIEWPORT_TILE_SIZE);
+                    }
+
+                    // Draw grid
+                    ctx.strokeStyle = '#333333';
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(canvasX, canvasY, VIEWPORT_TILE_SIZE, VIEWPORT_TILE_SIZE);
+                }
+            }
+
+            // Draw player in center
+            const centerCanvasX = Math.floor(VIEWPORT_WIDTH / 2) * VIEWPORT_TILE_SIZE + VIEWPORT_TILE_SIZE / 2;
+            const centerCanvasY = Math.floor(VIEWPORT_HEIGHT / 2) * VIEWPORT_TILE_SIZE + VIEWPORT_TILE_SIZE / 2;
+            ctx.fillStyle = playerFaction === 'pirates' ? '#FF1744' : '#00BCD4';
+            ctx.beginPath();
+            ctx.arc(centerCanvasX, centerCanvasY, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Highlight reveal radius
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(
+                VIEWPORT_TILE_SIZE / 2,
+                VIEWPORT_TILE_SIZE / 2,
+                VIEWPORT_TILE_SIZE * 3,
+                VIEWPORT_TILE_SIZE * 3
+            );
+        }
+
+        function generateNewMap() {
+            const seed = parseInt(document.getElementById('seedInput').value);
+            currentMap = generateMap(seed);
+
+            // Set initial player position to spawn area
+            const spawnTiles = getSpawnTiles(currentMap, playerFaction);
+            if (spawnTiles.length > 0) {
+                playerPos = { x: spawnTiles[0].x, y: spawnTiles[0].y };
+            }
+
+            revealTiles(playerPos.x, playerPos.y, currentMap);
+            document.getElementById('playerPos').textContent = `(${playerPos.x}, ${playerPos.y})`;
+            renderFullMap(seed);
+            renderViewport();
+        }
+
+        function generateRandomMap() {
+            const randomSeed = Math.floor(Math.random() * 1000000);
+            document.getElementById('seedInput').value = randomSeed;
+            generateNewMap();
+        }
+
+        function setPlayerFaction(faction) {
+            playerFaction = faction;
+            document.getElementById('pirateBtn').classList.toggle('active', faction === 'pirates');
+            document.getElementById('navyBtn').classList.toggle('active', faction === 'navy');
+
+            const spawnTiles = getSpawnTiles(currentMap, playerFaction);
+            if (spawnTiles.length > 0) {
+                playerPos = { x: spawnTiles[0].x, y: spawnTiles[0].y };
+                revealTiles(playerPos.x, playerPos.y, currentMap);
+                document.getElementById('playerPos').textContent = `(${playerPos.x}, ${playerPos.y})`;
+                renderFullMap(0);
+                renderViewport();
+            }
+        }
+
+        // Generate initial map
+        generateNewMap();
+    </script>
+</body>
+</html>
