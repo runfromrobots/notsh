@@ -567,4 +567,3 @@ export default function Board() {
     </div>
   )
 }
-// Rebuild trigger
