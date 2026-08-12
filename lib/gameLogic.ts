@@ -1,4 +1,4 @@
-import { Player, GameState, Tile, MoveType, Encounter, EncounterOutcome, Faction } from './types'
+import { Player, GameState, MoveType, Encounter, EncounterOutcome, Faction } from './types'
 import { getTile, getAdjacentTiles, generateMap } from './mapGenerator'
 import * as C from './constants'
 
