@@ -7,20 +7,28 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('games')
-      .select('id, code, status, day_number, current_player_faction, sos_positions')
+      .select('id, code, status')
       .eq('status', status)
-      .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(10)
 
     if (error) throw error
 
-    // For each game, get player count
+    // Get player counts for each game
     const gamesWithPlayers = await Promise.all(
-      (data || []).map(async (game: any) => {
+      data.map(async (game) => {
         const { data: players, error: playersError } = await supabase
           .from('players')
-          .select('id, name, faction', { count: 'exact' })
+          .select('id, name, faction')
           .eq('game_id', game.id)
+
+        if (playersError) {
+          console.error('Error fetching players:', playersError)
+          return {
+            ...game,
+            playerCount: 0,
+            players: [],
+          }
+        }
 
         return {
           ...game,
