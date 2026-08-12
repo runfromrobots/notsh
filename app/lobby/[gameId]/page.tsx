@@ -36,7 +36,7 @@ export default function Lobby() {
     // Poll for game state changes every 2 seconds
     const interval = setInterval(fetchGameState, 2000)
     return () => clearInterval(interval)
-  }, [gameId])
+  }, [gameId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchGameState = async () => {
     try {

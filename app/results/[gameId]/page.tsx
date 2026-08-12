@@ -30,7 +30,7 @@ export default function Results() {
 
   useEffect(() => {
     fetchGameState()
-  }, [gameId])
+  }, [gameId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchGameState = async () => {
     try {
