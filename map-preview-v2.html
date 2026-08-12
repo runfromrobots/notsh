@@ -320,13 +320,18 @@
 
                             // 25% of interior is mountain clusters (large contiguous blocks)
                             if (clusterNoise < 0.25) {
-                                // Mountain cluster - assign elevation based on fine noise
-                                const fineNoise = perlinNoise(x, y, seed);
+                                // Mountain cluster - concentric elevation rings based on distance from cluster center
+                                // Cluster center is at (coarseX * 4 + 2, coarseY * 4 + 2)
+                                const clusterCenterX = coarseX * 4 + 2;
+                                const clusterCenterY = coarseY * 4 + 2;
+                                const distFromClusterCenter = Math.sqrt(
+                                    Math.pow(x - clusterCenterX, 2) + Math.pow(y - clusterCenterY, 2)
+                                );
 
-                                // Create elevation tiers
-                                if (fineNoise < 0.15) {
+                                // Concentric rings: center to edges = Peak → Mid → Base
+                                if (distFromClusterCenter < 2) {
                                     type = 'mountain_peak';
-                                } else if (fineNoise < 0.22) {
+                                } else if (distFromClusterCenter < 4) {
                                     type = 'mountain_mid';
                                 } else {
                                     type = 'mountain_base';

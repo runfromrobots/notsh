@@ -185,16 +185,20 @@ export function generateMap(seed: number): GridState {
 
           // 25% of interior is mountain clusters (large contiguous blocks)
           if (clusterNoise < 0.25) {
-            // Mountain cluster - elevation follows cluster gradient for smooth transitions
-            // Map cluster noise (0-0.25) to elevation levels
-            if (clusterNoise < 0.08) {
-              // Peak: snowy white (level 3) - center of cluster
+            // Mountain cluster - concentric elevation rings based on distance from cluster center
+            // Cluster center is at (coarseX * 4 + 2, coarseY * 4 + 2)
+            const clusterCenterX = coarseX * 4 + 2
+            const clusterCenterY = coarseY * 4 + 2
+            const distFromClusterCenter = Math.sqrt(
+              Math.pow(x - clusterCenterX, 2) + Math.pow(y - clusterCenterY, 2)
+            )
+
+            // Concentric rings: center to edges = Peak → Mid → Base
+            if (distFromClusterCenter < 2) {
               type = TileType.MountainPeak
-            } else if (clusterNoise < 0.16) {
-              // Mid elevation: light gray (level 2) - middle slopes
+            } else if (distFromClusterCenter < 4) {
               type = TileType.MountainMid
             } else {
-              // Base: dark gray (level 1) - outer slopes
               type = TileType.MountainBase
             }
           } else {
