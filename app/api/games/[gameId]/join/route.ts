@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getGame, getPlayers, createPlayer, updateGame } from '@/lib/db'
+import { getGame, getPlayers, createPlayer, updateGame, updatePlayer } from '@/lib/db'
 import { initializePlayer, spawnPlayers, generateMap } from '@/lib/gameLogic'
 import { Faction, GameStatus } from '@/lib/types'
 import { generateMap as generateMapData } from '@/lib/mapGenerator'
@@ -94,8 +94,10 @@ export async function POST(
 
       // Update both players with spawn positions
       for (const player of allPlayers) {
-        // Note: This would need an updatePlayer call that's saved to DB
-        // For now we're just tracking it in memory for the response
+        await updatePlayer(gameId, player.id, {
+          x: player.x,
+          y: player.y,
+        })
       }
     }
 
