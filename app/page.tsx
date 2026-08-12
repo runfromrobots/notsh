@@ -319,8 +319,8 @@ export default function Home() {
               {games.map((game) => (
                 <div key={game.id} className={styles.gameCard}>
                   <p className={styles.gameCode}>Code: {game.code}</p>
-                  <p className={styles.playerCount}>{game.playerCount}/2 players</p>
-                  {game.players.length > 0 && (
+                  <p className={styles.playerCount}>{game.playerCount || 0}/2 players</p>
+                  {Array.isArray(game.players) && game.players.length > 0 && (
                     <p className={styles.gamePlayer}>
                       Playing: {game.players[0].name}
                     </p>

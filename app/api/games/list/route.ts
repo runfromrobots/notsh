@@ -13,9 +13,12 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error
 
+    // Ensure data is an array
+    const gamesList = Array.isArray(data) ? data : []
+
     // Get player counts for each game
     const gamesWithPlayers = await Promise.all(
-      data.map(async (game) => {
+      gamesList.map(async (game) => {
         const { data: players, error: playersError } = await supabase
           .from('players')
           .select('id, name, faction')
