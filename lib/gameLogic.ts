@@ -1,11 +1,11 @@
-import { Player, GameState, MoveType, Encounter, EncounterOutcome, Faction } from './types'
+import { Player, GameState, MoveType, Encounter, EncounterOutcome, Faction, GameStatus } from './types'
 import { getTile, generateMap } from './mapGenerator'
 import * as C from './constants'
 
 export function initializeGame(gameId: string): GameState {
   return {
     id: gameId,
-    status: 'waiting',
+    status: GameStatus.Waiting,
     currentTurn: 0,
     createdAt: Date.now(),
     updatedAt: Date.now(),
