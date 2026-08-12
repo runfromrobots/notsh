@@ -112,29 +112,6 @@
             image-rendering: pixelated;
         }
 
-        .legend {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 1rem;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid #333;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .legend-color {
-            width: 30px;
-            height: 30px;
-            border: 1px solid #555;
-            border-radius: 2px;
-        }
-
         .info {
             margin-top: 1rem;
             font-size: 0.9rem;
@@ -188,36 +165,6 @@
             </div>
         </div>
 
-        <div class="legend">
-            <div class="legend-item">
-                <div class="legend-color" style="background: #1e6b9e;"></div>
-                <span>Water (Impassable)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #5a4d3a;"></div>
-                <span>Mountains (Impassable)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #c9a961;"></div>
-                <span>Beach (Traversable)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #2d5a2d;"></div>
-                <span>Jungle (Traversable)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #7a8fa3;"></div>
-                <span>Shore (Traversable)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #FFD700; border: 1px solid #888;"></div>
-                <span>Log Spawn</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #1a1a2e; border: 2px solid #FFD700;"></div>
-                <span>Fog of War</span>
-            </div>
-        </div>
 
         <div class="info">
             <p>Map Size: 64x48 tiles | Only ONE connected landmass | Players only spawn on land</p>
@@ -229,9 +176,9 @@
         const TILE_COLORS = {
             water: '#1e6b9e',
             mountain: '#5a4d3a',
-            jungle: '#2d5a2d',
-            beach: '#c9a961',
-            shore: '#7a8fa3',
+            jungle: '#3d7d3d',
+            beach: '#d4af7a',
+            shore: '#d4af7a',
         };
 
         const COVERAGE = {
@@ -315,8 +262,8 @@
         function generateMap(seed) {
             const tiles = [];
             const rng = new SeededRandom(seed);
-            const centerX = MAP_WIDTH / 2;
-            const centerY = MAP_HEIGHT / 2;
+            const centerX = (MAP_WIDTH - 1) / 2;
+            const centerY = (MAP_HEIGHT - 1) / 2;
             const maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
 
             for (let y = 0; y < MAP_HEIGHT; y++) {

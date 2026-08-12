@@ -124,8 +124,8 @@ export function generateIslandName(seed: number): string {
 export function generateMap(seed: number): GridState {
   const tiles: Tile[] = []
   const rng = new SeededRandom(seed)
-  const centerX = C.MAP_WIDTH / 2
-  const centerY = C.MAP_HEIGHT / 2
+  const centerX = (C.MAP_WIDTH - 1) / 2
+  const centerY = (C.MAP_HEIGHT - 1) / 2
   const maxDist = Math.sqrt(centerX * centerX + centerY * centerY)
 
   // Generate island based on distance from center + noise for organic shape
