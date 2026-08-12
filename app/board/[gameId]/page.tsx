@@ -65,13 +65,21 @@ export default function Board() {
 
   useEffect(() => {
     const name = localStorage.getItem('playerName')
-    setPlayerName(name || '')
-    fetchGameState()
-
-    // Poll every 2 seconds
-    const interval = setInterval(fetchGameState, 2000)
-    return () => clearInterval(interval)
+    if (name) {
+      setPlayerName(name)
+      // Only fetch after playerName is known
+      fetchGameStateWithName(name)
+      const interval = setInterval(() => fetchGameStateWithName(name), 2000)
+      return () => clearInterval(interval)
+    }
   }, [gameId])
+
+  useEffect(() => {
+    if (playerName && players.length > 0) {
+      const current = players.find((p: Player) => p.name === playerName)
+      setCurrentPlayer(current)
+    }
+  }, [playerName, players])
 
   useEffect(() => {
     if (canvasRef.current && (tiles?.length || 0) > 0 && currentPlayer) {
@@ -89,9 +97,6 @@ export default function Board() {
         setTiles(data.tiles || [])
         setLoading(false)
 
-        const current = data.players?.find((p: Player) => p.name === playerName)
-        setCurrentPlayer(current)
-
         // Check if game is over
         if (data.game?.status === 'rescued') {
           router.push(`/results/${gameId}`)
@@ -100,6 +105,10 @@ export default function Board() {
     } catch (error) {
       console.error('Failed to fetch game state:', error)
     }
+  }
+
+  const fetchGameStateWithName = async (name: string) => {
+    await fetchGameState()
   }
 
   const renderMap = () => {
@@ -283,10 +292,13 @@ export default function Board() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.gameInfo}>
-          <h1>SOS - Day {game?.dayNumber}</h1>
+          <h1>SOS - Day {game?.dayNumber || 1}</h1>
           <p className={styles.turnInfo}>
-            Turn {game?.currentTurnInDay}/12 - {isYourTurn ? 'Your Turn' : `${opponent?.name}'s Turn`}
+            Turn {game?.currentTurnInDay || 0}/12 - {isYourTurn ? 'Your Turn' : `${opponent?.name}'s Turn`}
           </p>
+          {game?.code && (
+            <p className={styles.gameCode}>Code: {game.code}</p>
+          )}
         </div>
       </div>
 
