@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import styles from './board.module.css'
 
+// Coin flip debugging enabled
+
 interface Tile {
   x: number
   y: number
