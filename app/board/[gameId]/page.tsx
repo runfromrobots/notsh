@@ -74,7 +74,7 @@ export default function Board() {
   }, [gameId])
 
   useEffect(() => {
-    if (canvasRef.current && tiles.length > 0 && currentPlayer) {
+    if (canvasRef.current && (tiles?.length || 0) > 0 && currentPlayer) {
       renderMap()
     }
   }, [tiles, currentPlayer, game])
@@ -314,7 +314,7 @@ export default function Board() {
               Position: ({currentPlayer?.x}, {currentPlayer?.y})
             </p>
             <p className={styles.stats}>
-              Logs Placed: {currentPlayer?.logsPlaced}/{game?.sosPositions.length}
+              Logs Placed: {currentPlayer?.logsPlaced}/{game?.sosPositions?.length || 0}
             </p>
             {currentPlayer?.carrying && (
               <p className={styles.carrying}>📦 Carrying Log</p>
@@ -340,7 +340,7 @@ export default function Board() {
             </div>
           )}
 
-          {game?.sosPositions && game.sosPositions.length >= 14 && currentPlayer?.x === opponent?.x && currentPlayer?.y === opponent?.y && (
+          {game?.sosPositions && (game.sosPositions?.length || 0) >= 14 && currentPlayer?.x === opponent?.x && currentPlayer?.y === opponent?.y && (
             <button onClick={() => setShowRescueModal(true)} className={styles.rescueBtn}>
               🚁 Rescue!
             </button>
