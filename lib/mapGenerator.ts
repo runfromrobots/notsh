@@ -183,20 +183,27 @@ export function generateMap(seed: number): GridState {
           const coarseY = Math.floor(y / 4)
           const clusterNoise = perlinNoise(coarseX, coarseY, seed)
 
-          // 25% of interior is mountain clusters (large contiguous blocks)
-          if (clusterNoise < 0.25) {
-            // Mountain cluster - concentric elevation rings based on distance from cluster center
-            // Cluster center is at (coarseX * 4 + 2, coarseY * 4 + 2)
-            const clusterCenterX = coarseX * 4 + 2
-            const clusterCenterY = coarseY * 4 + 2
-            const distFromClusterCenter = Math.sqrt(
-              Math.pow(x - clusterCenterX, 2) + Math.pow(y - clusterCenterY, 2)
-            )
+          // Mountain ranges: sample at larger scale (8 tiles) for bigger contiguous ranges
+          const largeCoarseX = Math.floor(x / 8)
+          const largeCoarseY = Math.floor(y / 8)
+          const largeClusterNoise = perlinNoise(largeCoarseX, largeCoarseY, seed)
 
-            // Concentric rings: center to edges = Peak → Mid → Base
-            if (distFromClusterCenter < 2) {
+          // 25% threshold for mountain regions (but at larger scale)
+          if (largeClusterNoise < 0.25) {
+            // Within mountain range, use fine noise for ridge-like jagged peaks
+            const fineNoise = perlinNoise(x, y, seed)
+
+            // Ridge-based elevation: sample finer scale for ridge centerlines
+            const mediumCoarseX = Math.floor(x / 3)
+            const mediumCoarseY = Math.floor(y / 3)
+            const ridgeNoise = perlinNoise(mediumCoarseX, mediumCoarseY, seed)
+
+            // Combine: ridge noise creates jagged peaks, fine noise adds variation
+            const combinedElevation = (largeClusterNoise * 0.4) + (ridgeNoise * 0.3) + (fineNoise * 0.3)
+
+            if (combinedElevation < 0.08) {
               type = TileType.MountainPeak
-            } else if (distFromClusterCenter < 4) {
+            } else if (combinedElevation < 0.16) {
               type = TileType.MountainMid
             } else {
               type = TileType.MountainBase
