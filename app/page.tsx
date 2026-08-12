@@ -166,6 +166,8 @@ export default function Home() {
           <h2 className={styles.passwordTitle}>Nothing To See Here</h2>
           <input
             type="password"
+            id="password"
+            name="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -232,6 +234,8 @@ export default function Home() {
         <div className={styles.nameInput}>
           <input
             type="text"
+            id="playerName"
+            name="playerName"
             placeholder="Enter your name"
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
@@ -252,6 +256,8 @@ export default function Home() {
           <div className={styles.joinSection}>
             <input
               type="text"
+              id="gameCode"
+              name="gameCode"
               placeholder="Game code"
               value={gameCode}
               onChange={(e) => setGameCode(e.target.value.toUpperCase())}
