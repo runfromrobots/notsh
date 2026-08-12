@@ -39,7 +39,13 @@ function getTileType(noise: number): TileType {
 }
 
 function isNavigable(type: TileType): boolean {
-  return type !== TileType.Water && type !== TileType.Mountain
+  return (
+    type !== TileType.Water &&
+    type !== TileType.Mountain &&
+    type !== TileType.MountainBase &&
+    type !== TileType.MountainMid &&
+    type !== TileType.MountainPeak
+  )
 }
 
 function shouldSpawnLog(type: TileType, rng: SeededRandom): boolean {
@@ -172,22 +178,35 @@ export function generateMap(seed: number): GridState {
         if (distFromCenter > adjustedRadius - shoreThickness) {
           type = TileType.Beach
         } else {
-          // INTERIOR: Jungle with large mountain ranges
-          // Use coarser noise (lower frequency) for larger mountain clusters
+          // INTERIOR: Jungle with large mountain ranges with elevation layers
           const coarseX = Math.floor(x / 4)
           const coarseY = Math.floor(y / 4)
           const clusterNoise = perlinNoise(coarseX, coarseY, seed)
 
           // 25% of interior is mountain clusters (large contiguous blocks)
           if (clusterNoise < 0.25) {
-            type = TileType.Mountain
+            // Mountain cluster - assign elevation based on fine noise within cluster
+            const fineNoise = perlinNoise(x, y, seed)
+
+            // Create elevation tiers: peaks are in the highest 33% of noise, etc.
+            if (fineNoise < 0.15) {
+              // Peak: snowy white (level 3)
+              type = TileType.MountainPeak
+            } else if (fineNoise < 0.22) {
+              // Mid elevation: light gray (level 2)
+              type = TileType.MountainMid
+            } else {
+              // Base: dark gray (level 1)
+              type = TileType.MountainBase
+            }
           } else {
             type = TileType.Jungle
           }
         }
       }
 
-      const hasLog = type !== TileType.Water && type !== TileType.Mountain && shouldSpawnLog(type, rng)
+      const isMountain = type === TileType.Mountain || type === TileType.MountainBase || type === TileType.MountainMid || type === TileType.MountainPeak
+      const hasLog = type !== TileType.Water && !isMountain && shouldSpawnLog(type, rng)
 
       tiles.push({
         x,

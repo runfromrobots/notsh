@@ -4,7 +4,10 @@ export enum TileType {
   Shore = 'shore',
   Beach = 'beach',
   Jungle = 'jungle',
-  Mountain = 'mountain',
+  Mountain = 'mountain', // Legacy - use specific elevations instead
+  MountainBase = 'mountain_base', // Level 1 - dark gray
+  MountainMid = 'mountain_mid', // Level 2 - light gray
+  MountainPeak = 'mountain_peak', // Level 3 - snowy white
 }
 
 export interface Tile {

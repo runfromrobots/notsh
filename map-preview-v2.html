@@ -176,6 +176,9 @@
         const TILE_COLORS = {
             water: '#1e6b9e',
             mountain: '#5a4d3a',
+            mountain_base: '#4a3d2a',
+            mountain_mid: '#7a7070',
+            mountain_peak: '#e8e8e8',
             jungle: '#3d7d3d',
             beach: '#d4af7a',
             shore: '#d4af7a',
@@ -256,7 +259,7 @@
         }
 
         function isNavigable(type) {
-            return type !== 'water' && type !== 'mountain';
+            return type !== 'water' && type !== 'mountain' && type !== 'mountain_base' && type !== 'mountain_mid' && type !== 'mountain_peak';
         }
 
         function getTile(x, y, tiles) {
@@ -310,22 +313,32 @@
                         if (distFromCenter > adjustedRadius - shoreThickness) {
                             type = 'beach';
                         } else {
-                            // INTERIOR: Jungle with large mountain ranges
-                            // Use coarser noise (lower frequency) for larger mountain clusters
+                            // INTERIOR: Jungle with large mountain ranges with elevation layers
                             const coarseX = Math.floor(x / 4);
                             const coarseY = Math.floor(y / 4);
                             const clusterNoise = perlinNoise(coarseX, coarseY, seed);
 
                             // 25% of interior is mountain clusters (large contiguous blocks)
                             if (clusterNoise < 0.25) {
-                                type = 'mountain';
+                                // Mountain cluster - assign elevation based on fine noise
+                                const fineNoise = perlinNoise(x, y, seed);
+
+                                // Create elevation tiers
+                                if (fineNoise < 0.15) {
+                                    type = 'mountain_peak';
+                                } else if (fineNoise < 0.22) {
+                                    type = 'mountain_mid';
+                                } else {
+                                    type = 'mountain_base';
+                                }
                             } else {
                                 type = 'jungle';
                             }
                         }
                     }
 
-                    const hasLog = type !== 'water' && type !== 'mountain' && rng.next() < LOG_SPAWN_CHANCE[type];
+                    const isMountain = type.includes('mountain');
+                    const hasLog = type !== 'water' && !isMountain && rng.next() < LOG_SPAWN_CHANCE[type];
 
                     tiles.push({
                         x,
