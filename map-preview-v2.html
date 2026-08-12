@@ -48,7 +48,8 @@
             align-items: center;
         }
 
-        input[type="number"] {
+        input[type="number"],
+        input[type="text"] {
             padding: 0.5rem;
             background: #0D1117;
             border: 1px solid #00BCD4;
@@ -160,7 +161,7 @@
 
         <div class="controls">
             <label for="seedInput">Map Seed:</label>
-            <input type="number" id="seedInput" value="12345" min="0" max="999999">
+            <input type="text" id="seedInput" value="12345" placeholder="Enter seed (text or numbers)">
             <button onclick="generateNewMap()">Generate Map</button>
             <button onclick="generateRandomMap()" style="background: #00BCD4; border-color: #FFFFFF;">Random Seed</button>
             <button id="pirateBtn" class="active" onclick="setPlayerFaction('pirates')">👨‍✈️ Pirates View</button>
@@ -256,6 +257,26 @@
         let playerPos = { x: 32, y: 24 };
         let playerFaction = 'pirates';
         let revealedTiles = new Set();
+
+        function hashString(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            return Math.abs(hash) % 1000000;
+        }
+
+        function getSeedValue(input) {
+            if (input.trim() === '') return 12345;
+            if (!isNaN(input)) {
+                // Numeric input
+                return Math.abs(parseInt(input)) % 1000000;
+            }
+            // Alphanumeric input - hash it
+            return hashString(input.toLowerCase());
+        }
 
         class SeededRandom {
             constructor(seed) {
@@ -530,22 +551,21 @@
             );
         }
 
-        function findLargestIsland(tiles) {
-            const landTiles = new Map();
+        function findLargestLandmass(tiles) {
+            const tilesMap = new Map();
             for (const tile of tiles) {
-                if (['beach', 'jungle', 'shore'].includes(tile.type)) {
-                    landTiles.set(`${tile.x},${tile.y}`, tile);
-                }
+                tilesMap.set(`${tile.x},${tile.y}`, tile);
             }
 
-            if (landTiles.size === 0) return new Set();
-
-            // Find largest connected component using flood fill
             const visited = new Set();
             const components = [];
+            const landTypes = new Set(['beach', 'jungle', 'shore', 'mountain']);
 
-            for (const [key, tile] of landTiles) {
-                if (!visited.has(key)) {
+            for (const tile of tiles) {
+                const key = `${tile.x},${tile.y}`;
+
+                // Start component from any land tile (navigable or mountain)
+                if (!visited.has(key) && landTypes.has(tile.type)) {
                     const component = new Set();
                     const queue = [[tile.x, tile.y]];
                     component.add(key);
@@ -553,15 +573,19 @@
 
                     while (queue.length > 0) {
                         const [x, y] = queue.shift();
+
                         for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
                             const nx = x + dx;
                             const ny = y + dy;
                             const neighborKey = `${nx},${ny}`;
 
-                            if (!visited.has(neighborKey) && landTiles.has(neighborKey)) {
-                                visited.add(neighborKey);
-                                component.add(neighborKey);
-                                queue.push([nx, ny]);
+                            if (!visited.has(neighborKey)) {
+                                const neighbor = tilesMap.get(neighborKey);
+                                if (neighbor && landTypes.has(neighbor.type)) {
+                                    visited.add(neighborKey);
+                                    component.add(neighborKey);
+                                    queue.push([nx, ny]);
+                                }
                             }
                         }
                     }
@@ -570,7 +594,7 @@
                 }
             }
 
-            // Return largest component
+            // Return largest landmass
             let largest = new Set();
             for (const component of components) {
                 if (component.size > largest.size) {
@@ -582,11 +606,13 @@
         }
 
         function ensureSingleIsland(tiles) {
-            const island = findLargestIsland(tiles);
+            const island = findLargestLandmass(tiles);
+            const landTypes = new Set(['beach', 'jungle', 'shore', 'mountain']);
 
             // Convert all other land tiles to water
             return tiles.map(tile => {
-                if (['beach', 'jungle', 'shore'].includes(tile.type) && !island.has(`${tile.x},${tile.y}`)) {
+                const key = `${tile.x},${tile.y}`;
+                if (landTypes.has(tile.type) && !island.has(key)) {
                     return { ...tile, type: 'water', hasLog: false };
                 }
                 return tile;
@@ -594,7 +620,8 @@
         }
 
         function generateNewMap() {
-            const seed = parseInt(document.getElementById('seedInput').value);
+            const seedInput = document.getElementById('seedInput').value;
+            const seed = getSeedValue(seedInput);
             let tiles = generateMap(seed);
 
             // Ensure only ONE connected island
