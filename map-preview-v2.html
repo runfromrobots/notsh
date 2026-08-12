@@ -235,10 +235,10 @@
         };
 
         const COVERAGE = {
-            water: 0.08,
+            water: 0.30,
             mountain: 0.12,
-            beach: 0.20,
-            jungle: 0.60,
+            beach: 0.10,
+            jungle: 0.48,
         };
 
         const MAP_WIDTH = 64;
@@ -588,15 +588,12 @@
                 }
             }
 
-            // Return largest landmass
-            let largest = new Set();
-            for (const component of components) {
-                if (component.size > largest.size) {
-                    largest = component;
-                }
-            }
+            if (components.length === 0) return new Set();
 
-            return largest;
+            // Return largest landmass
+            return components.reduce((largest, current) =>
+                current.size > largest.size ? current : largest
+            );
         }
 
         function ensureSingleIsland(tiles) {
