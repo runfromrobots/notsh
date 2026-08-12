@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOS Island Map Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0D1117;
+            color: #FFFFFF;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            background: #1a1a2e;
+            border: 2px solid #00BCD4;
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 1200px;
+        }
+
+        h1 {
+            color: #FF1744;
+            text-shadow: 2px 2px 0px #FFD700;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        input[type="number"] {
+            padding: 0.5rem;
+            background: #0D1117;
+            border: 1px solid #00BCD4;
+            color: #FFFFFF;
+            border-radius: 4px;
+            width: 150px;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            background: #FF1744;
+            color: #FFFFFF;
+            border: 2px solid #FFD700;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #FFD700;
+            color: #0D1117;
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            border: 1px solid #333;
+            padding: 1rem;
+            background: #000;
+            border-radius: 4px;
+        }
+
+        canvas {
+            border: 2px solid #00BCD4;
+            max-width: 100%;
+            height: auto;
+            image-rendering: pixelated;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #555;
+            border-radius: 2px;
+        }
+
+        .info {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #FFD700;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏝️ SOS Island Map Preview</h1>
+
+        <div class="controls">
+            <label for="seedInput">Map Seed:</label>
+            <input type="number" id="seedInput" value="12345" min="0" max="999999">
+            <button onclick="generateNewMap()">Generate Map</button>
+            <button onclick="generateRandomMap()" style="background: #00BCD4; border-color: #FFFFFF;">Random Seed</button>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="mapCanvas" width="640" height="480"></canvas>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #1e6b9e;"></div>
+                <span>Water (40%)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #5a4d3a;"></div>
+                <span>Mountains (15%)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #c9a961;"></div>
+                <span>Beach (10%)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #2d5a2d;"></div>
+                <span>Jungle (35%)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #7a8fa3;"></div>
+                <span>Shore (5%)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FFD700; border: 1px solid #888;"></div>
+                <span>Log Spawn</span>
+            </div>
+        </div>
+
+        <div class="info">
+            <p>Map Size: 64x48 tiles | Golden squares = log spawn locations</p>
+            <p>Pirates spawn NE (top-right), Navy spawn SW (bottom-left)</p>
+        </div>
+    </div>
+
+    <script>
+        const TILE_COLORS = {
+            water: '#1e6b9e',
+            mountain: '#5a4d3a',
+            jungle: '#2d5a2d',
+            beach: '#c9a961',
+            shore: '#7a8fa3',
+        };
+
+        const COVERAGE = {
+            water: 0.4,
+            mountain: 0.15,
+            beach: 0.1,
+            jungle: 0.35,
+        };
+
+        const MAP_WIDTH = 64;
+        const MAP_HEIGHT = 48;
+        const TILE_SIZE = 10;
+
+        const LOG_SPAWN_CHANCE = {
+            jungle: 0.4,
+            beach: 0.15,
+        };
+
+        class SeededRandom {
+            constructor(seed) {
+                this.seed = seed;
+            }
+
+            next() {
+                this.seed = (this.seed * 9301 + 49297) % 233280;
+                return this.seed / 233280;
+            }
+        }
+
+        function perlinNoise(x, y, seed) {
+            const rng = new SeededRandom(seed + x * 73856093 ^ y * 19349663);
+            return rng.next();
+        }
+
+        function getTileType(noise) {
+            if (noise < COVERAGE.water) return 'water';
+            if (noise < COVERAGE.water + COVERAGE.mountain) return 'mountain';
+            if (noise < COVERAGE.water + COVERAGE.mountain + COVERAGE.beach) return 'beach';
+            if (noise < COVERAGE.water + COVERAGE.mountain + COVERAGE.beach + COVERAGE.jungle) return 'jungle';
+            return 'shore';
+        }
+
+        function isNavigable(type) {
+            return type !== 'water' && type !== 'mountain';
+        }
+
+        function generateMap(seed) {
+            const tiles = [];
+            const rng = new SeededRandom(seed);
+
+            for (let y = 0; y < MAP_HEIGHT; y++) {
+                for (let x = 0; x < MAP_WIDTH; x++) {
+                    const noise = perlinNoise(x, y, seed);
+                    let type = getTileType(noise);
+
+                    // Add shore tiles at edges
+                    const isEdge = x < 3 || x > MAP_WIDTH - 4 || y < 3 || y > MAP_HEIGHT - 4;
+                    if (isEdge && type !== 'water' && type !== 'mountain') {
+                        if (rng.next() > 0.6) type = 'shore';
+                    }
+
+                    const hasLog = isNavigable(type) && rng.next() < LOG_SPAWN_CHANCE[type];
+
+                    tiles.push({
+                        x,
+                        y,
+                        type,
+                        hasLog,
+                    });
+                }
+            }
+
+            return tiles;
+        }
+
+        function renderMap(seed) {
+            const canvas = document.getElementById('mapCanvas');
+            const ctx = canvas.getContext('2d');
+            const tiles = generateMap(seed);
+
+            // Clear canvas
+            ctx.fillStyle = '#0D1117';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw tiles
+            tiles.forEach(tile => {
+                const x = tile.x * TILE_SIZE;
+                const y = tile.y * TILE_SIZE;
+
+                ctx.fillStyle = TILE_COLORS[tile.type];
+                ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+
+                // Draw grid
+                ctx.strokeStyle = '#333333';
+                ctx.lineWidth = 0.5;
+                ctx.strokeRect(x, y, TILE_SIZE, TILE_SIZE);
+
+                // Draw log indicator
+                if (tile.hasLog) {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+                }
+            });
+
+            // Draw spawn markers
+            ctx.fillStyle = 'rgba(255, 23, 68, 0.3)';
+            ctx.fillRect(40 * TILE_SIZE, 0, 24 * TILE_SIZE, 14 * TILE_SIZE); // Pirates NE
+
+            ctx.fillStyle = 'rgba(0, 188, 212, 0.3)';
+            ctx.fillRect(0, 34 * TILE_SIZE, 32 * TILE_SIZE, 14 * TILE_SIZE); // Navy SW
+        }
+
+        function generateNewMap() {
+            const seed = parseInt(document.getElementById('seedInput').value);
+            renderMap(seed);
+        }
+
+        function generateRandomMap() {
+            const randomSeed = Math.floor(Math.random() * 1000000);
+            document.getElementById('seedInput').value = randomSeed;
+            renderMap(randomSeed);
+        }
+
+        // Generate initial map
+        generateNewMap();
+    </script>
+</body>
+</html>
