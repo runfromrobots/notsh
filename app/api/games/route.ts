@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateMap } from '@/lib/mapGenerator'
-import { createGame, getGame, getTiles, upsertTiles, getPlayers, createPlayer, updateGame } from '@/lib/db'
+import { createGame, getGame, getTiles, upsertTiles, getPlayers, createPlayer, updateGame, updatePlayer } from '@/lib/db'
 import { initializePlayer } from '@/lib/gameLogic'
 import { Faction, GameStatus } from '@/lib/types'
 
@@ -93,7 +93,10 @@ export async function POST(request: NextRequest) {
 
       // Update player positions
       for (const player of allPlayers) {
-        await createPlayer(game.id, player)
+        await updatePlayer(game.id, player.id, {
+          x: player.x,
+          y: player.y,
+        })
       }
 
       return NextResponse.json({
