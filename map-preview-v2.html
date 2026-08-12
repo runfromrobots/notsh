@@ -283,9 +283,9 @@
                         type = 'water';
                     } else {
                         // Land - assign terrain type based on noise
-                        if (noise < 0.20) type = 'mountain';
-                        else if (noise < 0.30) type = 'beach';
-                        else if (noise < 0.70) type = 'jungle';
+                        if (noise < 0.10) type = 'mountain';
+                        else if (noise < 0.25) type = 'beach';
+                        else if (noise < 0.75) type = 'jungle';
                         else type = 'beach';
                     }
 
@@ -304,17 +304,17 @@
         }
 
         function getSpawnTiles(tiles, faction) {
-            return tiles.filter(tile => {
-                if (!isNavigable(tile.type)) return false;
+            const navigable = tiles.filter(tile => isNavigable(tile.type));
 
-                if (faction === 'pirates') {
-                    // Northeast quadrant: x > 32, y < 14
-                    return tile.x > 32 && tile.y < 14;
-                } else {
-                    // Southwest quadrant: x < 32, y > 34
-                    return tile.x < 32 && tile.y > 34;
-                }
-            });
+            if (faction === 'pirates') {
+                // North pole: find navigable tiles with minimum y
+                const minY = Math.min(...navigable.map(t => t.y));
+                return navigable.filter(t => t.y <= minY + 3);
+            } else {
+                // South pole: find navigable tiles with maximum y
+                const maxY = Math.max(...navigable.map(t => t.y));
+                return navigable.filter(t => t.y >= maxY - 3);
+            }
         }
 
         function revealTiles(centerX, centerY, tiles) {
@@ -361,13 +361,30 @@
             ctx.fillStyle = 'rgba(0, 188, 212, 0.2)';
             ctx.fillRect(0, 35 * FULL_MAP_TILE_SIZE, 32 * FULL_MAP_TILE_SIZE, 13 * FULL_MAP_TILE_SIZE);
 
-            // Draw player
+            // Draw player position
             const px = playerPos.x * FULL_MAP_TILE_SIZE + FULL_MAP_TILE_SIZE / 2;
             const py = playerPos.y * FULL_MAP_TILE_SIZE + FULL_MAP_TILE_SIZE / 2;
             ctx.fillStyle = playerFaction === 'pirates' ? '#FF1744' : '#00BCD4';
             ctx.beginPath();
-            ctx.arc(px, py, 2, 0, Math.PI * 2);
+            ctx.arc(px, py, 3, 0, Math.PI * 2);
             ctx.fill();
+
+            // Draw spawn zones as outlines
+            const pirateTiles = getSpawnTiles(currentMap, 'pirates');
+            const navyTiles = getSpawnTiles(currentMap, 'navy');
+
+            // Pirates (north)
+            ctx.strokeStyle = 'rgba(255, 23, 68, 0.5)';
+            ctx.lineWidth = 1;
+            pirateTiles.forEach(tile => {
+                ctx.strokeRect(tile.x * FULL_MAP_TILE_SIZE, tile.y * FULL_MAP_TILE_SIZE, FULL_MAP_TILE_SIZE, FULL_MAP_TILE_SIZE);
+            });
+
+            // Navy (south)
+            ctx.strokeStyle = 'rgba(0, 188, 212, 0.5)';
+            navyTiles.forEach(tile => {
+                ctx.strokeRect(tile.x * FULL_MAP_TILE_SIZE, tile.y * FULL_MAP_TILE_SIZE, FULL_MAP_TILE_SIZE, FULL_MAP_TILE_SIZE);
+            });
 
             // Click handler for full map
             canvas.onclick = (e) => {

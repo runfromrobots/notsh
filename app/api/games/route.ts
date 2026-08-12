@@ -53,22 +53,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Spawn player on map (Pirates spawn in Northeast)
+    // Spawn player on map (Pirates spawn at North pole)
     // Only spawn on navigable land tiles (Beach, Jungle, Shore - not Water or Mountain)
-    const navigableTiles = new Set(['beach', 'jungle', 'shore'])
-    const spawnTiles = tilesArray.filter(
-      (tile) =>
-        tile.x > 32 &&
-        tile.y < 14 &&
-        navigableTiles.has(tile.type)
-    )
+    const navigableTiles = tilesArray.filter((tile) => ['beach', 'jungle', 'shore'].includes(tile.type))
 
-    if (spawnTiles.length > 0) {
-      const spawn = spawnTiles[Math.floor(Math.random() * spawnTiles.length)]
-      await updatePlayer(game.id, playerId1, {
-        x: spawn.x,
-        y: spawn.y,
-      })
+    if (navigableTiles.length > 0) {
+      // Find north pole (minimum y values)
+      const minY = Math.min(...navigableTiles.map(t => t.y))
+      const northSpawns = navigableTiles.filter(t => t.y <= minY + 3)
+
+      if (northSpawns.length > 0) {
+        const spawn = northSpawns[Math.floor(Math.random() * northSpawns.length)]
+        await updatePlayer(game.id, playerId1, {
+          x: spawn.x,
+          y: spawn.y,
+        })
+      }
     }
 
     // Update game status to active with first player's faction

@@ -145,9 +145,9 @@ export function generateMap(seed: number): GridState {
         type = TileType.Water
       } else {
         // Land - assign terrain type based on noise
-        if (noise < 0.20) type = TileType.Mountain
-        else if (noise < 0.30) type = TileType.Beach
-        else if (noise < 0.70) type = TileType.Jungle
+        if (noise < 0.10) type = TileType.Mountain
+        else if (noise < 0.25) type = TileType.Beach
+        else if (noise < 0.75) type = TileType.Jungle
         else type = TileType.Beach
       }
 

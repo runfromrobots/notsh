@@ -65,22 +65,22 @@ export async function POST(
       const mapData = generateMapData(game.mapSeed)
       const tilesArray = Array.from(mapData.tiles.values())
 
-      // Spawn second player (Navy side, Southwest quadrant)
+      // Spawn second player (Navy at South pole)
       // Only spawn on navigable land tiles (Beach, Jungle, Shore - not Water or Mountain)
-      const navigableTiles = new Set(['beach', 'jungle', 'shore'])
-      const spawnTiles = tilesArray.filter(
-        (tile) =>
-          tile.x < 32 &&
-          tile.y > 34 &&
-          navigableTiles.has(tile.type)
-      )
+      const navigableTiles = tilesArray.filter((tile) => ['beach', 'jungle', 'shore'].includes(tile.type))
 
-      if (spawnTiles.length > 0) {
-        const spawn = spawnTiles[Math.floor(Math.random() * spawnTiles.length)]
-        await updatePlayer(gameId, savedPlayer.id, {
-          x: spawn.x,
-          y: spawn.y,
-        })
+      if (navigableTiles.length > 0) {
+        // Find south pole (maximum y values)
+        const maxY = Math.max(...navigableTiles.map(t => t.y))
+        const southSpawns = navigableTiles.filter(t => t.y >= maxY - 3)
+
+        if (southSpawns.length > 0) {
+          const spawn = southSpawns[Math.floor(Math.random() * southSpawns.length)]
+          await updatePlayer(gameId, savedPlayer.id, {
+            x: spawn.x,
+            y: spawn.y,
+          })
+        }
       }
     }
 
