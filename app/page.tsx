@@ -104,13 +104,35 @@ export default function Home() {
       return
     }
 
-    const targetGameId = gameIdToJoin || gameCode.trim()
+    let targetGameId = gameIdToJoin
+
+    // If no gameId provided, look up by code
     if (!targetGameId) {
-      alert('Enter a game code!')
-      return
+      const codeToUse = gameCode.trim()
+      if (!codeToUse) {
+        alert('Enter a game code!')
+        return
+      }
+
+      setLoading(true)
+      try {
+        const lookupRes = await fetch(`/api/games/lookup?code=${codeToUse}`)
+        if (!lookupRes.ok) {
+          const error = await lookupRes.json()
+          alert(`Game not found: ${error.error}`)
+          setLoading(false)
+          return
+        }
+        const lookupData = await lookupRes.json()
+        targetGameId = lookupData.gameId
+      } catch (error) {
+        console.error('Error looking up game:', error)
+        alert('Failed to lookup game')
+        setLoading(false)
+        return
+      }
     }
 
-    setLoading(true)
     try {
       const res = await fetch(`/api/games/${targetGameId}/join`, {
         method: 'POST',
