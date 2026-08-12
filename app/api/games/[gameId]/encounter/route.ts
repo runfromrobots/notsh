@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getGame, getPlayers, updatePlayer, recordEncounter } from '@/lib/db'
-import { resolveRPS, checkEncounter } from '@/lib/gameLogic'
+import { resolveRPS } from '@/lib/gameLogic'
 import { Encounter, RPSChoice, GameStatus, Faction } from '@/lib/types'
 
 export async function POST(
