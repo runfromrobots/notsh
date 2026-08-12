@@ -68,15 +68,15 @@ export default function Board() {
     if (name) {
       setPlayerName(name)
       // Only fetch after playerName is known
-      fetchGameStateWithName(name)
-      const interval = setInterval(() => fetchGameStateWithName(name), 2000)
+      fetchGameState()
+      const interval = setInterval(fetchGameState, 2000)
       return () => clearInterval(interval)
     }
-  }, [gameId])
+  }, [gameId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (playerName && players.length > 0) {
-      const current = players.find((p: Player) => p.name === playerName)
+      const current = players.find((p: Player) => p.name === playerName) || null
       setCurrentPlayer(current)
     }
   }, [playerName, players])
@@ -85,7 +85,7 @@ export default function Board() {
     if (canvasRef.current && (tiles?.length || 0) > 0 && currentPlayer) {
       renderMap()
     }
-  }, [tiles, currentPlayer, game])
+  }, [tiles, currentPlayer, game]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchGameState = async () => {
     try {
