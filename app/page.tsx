@@ -1,12 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styles from './page.module.css'
 
+const CORRECT_PASSWORD = 'lovesexsecretgod'
+
 export default function Home() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [password, setPassword] = useState('')
   const [playerName, setPlayerName] = useState('')
   const [gameCode, setGameCode] = useState('')
   const [showAbout, setShowAbout] = useState(false)
+
+  useEffect(() => {
+    const savedAuth = localStorage.getItem('sosGameAuth')
+    if (savedAuth === 'true') {
+      setIsAuthenticated(true)
+    }
+  }, [])
+
+  const handlePasswordSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      if (password === CORRECT_PASSWORD) {
+        setIsAuthenticated(true)
+        localStorage.setItem('sosGameAuth', 'true')
+        setPassword('')
+      } else {
+        setPassword('')
+        alert('Incorrect password')
+      }
+    }
+  }
 
   const handleCreateGame = () => {
     if (!playerName.trim()) {
@@ -26,6 +50,25 @@ export default function Home() {
       return
     }
     // TODO: Join game via API and navigate
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.passwordContent}>
+          <h2 className={styles.passwordTitle}>Nothing To See Here</h2>
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyPress={handlePasswordSubmit}
+            className={styles.passwordInput}
+            autoFocus
+          />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -119,12 +162,6 @@ export default function Home() {
       {/* Tattoo Art Placeholder - Bottom Right */}
       <div className={styles.artworkPlaceholder + ' ' + styles.artBottomRight}>
         <div className={styles.placeholder}>[Compass Rose]</div>
-      </div>
-
-      <div className={styles.footer}>
-        <p>
-          <a href="https://github.com/runfromrobots/notsh" target="_blank">GitHub</a>
-        </p>
       </div>
     </div>
   )
