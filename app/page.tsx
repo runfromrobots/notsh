@@ -64,12 +64,12 @@ export default function Home() {
           <div className={styles.aboutSection}>
             <h2>About the Game</h2>
             <p>
-              You and your crew have crashed on an uncharted island. You're not alone—
+              You and your crew have crashed on an uncharted island. You&apos;re not alone—
               survivors from a rival faction are stranded with you, each desperate to escape.
             </p>
             <p>
               The island is shrouded in fog. Each day, you can explore only a limited area.
-              You'll find resources, encounter enemies, and race to build a rescue signal before
+              You&apos;ll find resources, encounter enemies, and race to build a rescue signal before
               your rivals do.
             </p>
             <p>
