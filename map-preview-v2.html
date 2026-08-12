@@ -545,69 +545,81 @@
             );
         }
 
-        function findLargestLandmass(tiles) {
+        function findEdgeWater(tiles) {
             const tilesMap = new Map();
             for (const tile of tiles) {
                 tilesMap.set(`${tile.x},${tile.y}`, tile);
             }
 
+            // Start flood fill from all water on the edges
             const visited = new Set();
-            const components = [];
-            const landTypes = new Set(['beach', 'jungle', 'shore', 'mountain']);
+            const queue = [];
 
+            // Add all edge water tiles to queue
             for (const tile of tiles) {
-                const key = `${tile.x},${tile.y}`;
-
-                // Start component from any land tile (navigable or mountain)
-                if (!visited.has(key) && landTypes.has(tile.type)) {
-                    const component = new Set();
-                    const queue = [[tile.x, tile.y]];
-                    component.add(key);
-                    visited.add(key);
-
-                    while (queue.length > 0) {
-                        const [x, y] = queue.shift();
-
-                        for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
-                            const nx = x + dx;
-                            const ny = y + dy;
-                            const neighborKey = `${nx},${ny}`;
-
-                            if (!visited.has(neighborKey)) {
-                                const neighbor = tilesMap.get(neighborKey);
-                                if (neighbor && landTypes.has(neighbor.type)) {
-                                    visited.add(neighborKey);
-                                    component.add(neighborKey);
-                                    queue.push([nx, ny]);
-                                }
-                            }
-                        }
+                if (tile.type === 'water') {
+                    if (tile.x === 0 || tile.x === MAP_WIDTH - 1 || tile.y === 0 || tile.y === MAP_HEIGHT - 1) {
+                        const key = `${tile.x},${tile.y}`;
+                        queue.push([tile.x, tile.y]);
+                        visited.add(key);
                     }
-
-                    components.push(component);
                 }
             }
 
-            if (components.length === 0) return new Set();
+            // Flood fill to find all water connected to edges
+            while (queue.length > 0) {
+                const [x, y] = queue.shift();
 
-            // Return largest landmass
-            return components.reduce((largest, current) =>
-                current.size > largest.size ? current : largest
-            );
+                for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    const neighborKey = `${nx},${ny}`;
+
+                    if (!visited.has(neighborKey) && nx >= 0 && nx < MAP_WIDTH && ny >= 0 && ny < MAP_HEIGHT) {
+                        const neighbor = tilesMap.get(neighborKey);
+                        if (neighbor && neighbor.type === 'water') {
+                            visited.add(neighborKey);
+                            queue.push([nx, ny]);
+                        }
+                    }
+                }
+            }
+
+            return visited;
         }
 
         function ensureSingleIsland(tiles) {
-            const island = findLargestLandmass(tiles);
-            const landTypes = new Set(['beach', 'jungle', 'shore', 'mountain']);
+            const edgeWater = findEdgeWater(tiles);
 
-            // Convert all other land tiles to water
+            // Convert all water not connected to edges into land
+            // Convert all other land fragments to water
             return tiles.map(tile => {
                 const key = `${tile.x},${tile.y}`;
-                if (landTypes.has(tile.type) && !island.has(key)) {
-                    return { ...tile, type: 'water', hasLog: false };
+
+                if (tile.type === 'water' && !edgeWater.has(key)) {
+                    // Inner water becomes jungle
+                    return { ...tile, type: 'jungle', hasLog: true };
                 }
+
+                if (tile.type === 'water' && edgeWater.has(key)) {
+                    // Edge water stays water
+                    return tile;
+                }
+
+                // All land stays land
                 return tile;
             });
+        }
+
+        function generateIslandName(seed) {
+            const adjectives = ['Dinghy', 'Skull', 'Treasure', 'Lost', 'Hidden', 'Whisper', 'Storm', 'Golden', 'Crimson', 'Silent', 'Mystic', 'Dragon'];
+            const nouns = ['Island', 'Key', 'Cove', 'Point', 'Reef', 'Haven', 'Shoal', 'Atoll', 'Cape', 'Islet'];
+
+            const rng = new SeededRandom(seed);
+            const adjIdx = Math.floor(rng.next() * adjectives.length);
+            const nounIdx = Math.floor(rng.next() * nouns.length);
+
+            return `${adjectives[adjIdx]} ${nouns[nounIdx]}`;
         }
 
         function generateNewMap() {
@@ -615,9 +627,13 @@
             const seed = getSeedValue(seedInput);
             let tiles = generateMap(seed);
 
-            // Ensure only ONE connected island
+            // Ensure only ONE connected island and convert inner water to land
             tiles = ensureSingleIsland(tiles);
             currentMap = tiles;
+
+            // Generate and display island name
+            const islandName = generateIslandName(seed);
+            document.querySelector('h1').textContent = `🏝️ ${islandName}`;
 
             // Set initial player position to spawn area
             const spawnTiles = getSpawnTiles(currentMap, playerFaction);

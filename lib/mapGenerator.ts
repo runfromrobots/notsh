@@ -47,7 +47,7 @@ function getTile(x: number, y: number, tiles: Tile[]): Tile | null {
   return tiles[y * C.MAP_WIDTH + x] || null
 }
 
-function findLargestLandmass(tiles: Tile[]): Set<string> {
+function findEdgeWater(tiles: Tile[]): Set<string> {
   const tilesMap = new Map<string, Tile>()
 
   // Index all tiles by position
@@ -55,68 +55,70 @@ function findLargestLandmass(tiles: Tile[]): Set<string> {
     tilesMap.set(`${tile.x},${tile.y}`, tile)
   }
 
-  // Find all connected components using navigable + mountain tiles
+  // Start flood fill from all water on the edges
   const visited = new Set<string>()
-  const components: Set<string>[] = []
+  const queue: Array<[number, number]> = []
 
+  // Add all edge water tiles to queue
   for (const tile of tiles) {
-    const key = `${tile.x},${tile.y}`
+    if (tile.type === TileType.Water) {
+      if (tile.x === 0 || tile.x === C.MAP_WIDTH - 1 || tile.y === 0 || tile.y === C.MAP_HEIGHT - 1) {
+        const key = `${tile.x},${tile.y}`
+        queue.push([tile.x, tile.y])
+        visited.add(key)
+      }
+    }
+  }
 
-    // Start component from any land tile (navigable or mountain)
-    if (!visited.has(key) && (isNavigable(tile.type) || tile.type === TileType.Mountain)) {
-      const component = new Set<string>()
-      const queue: Array<[number, number]> = [[tile.x, tile.y]]
-      component.add(key)
-      visited.add(key)
+  // Flood fill to find all water connected to edges
+  while (queue.length > 0) {
+    const [x, y] = queue.shift()!
 
-      while (queue.length > 0) {
-        const [x, y] = queue.shift()!
+    for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
+      const nx = x + dx
+      const ny = y + dy
+      const neighborKey = `${nx},${ny}`
 
-        // Check all 4 cardinal directions
-        for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
-          const nx = x + dx
-          const ny = y + dy
-          const neighborKey = `${nx},${ny}`
-
-          if (!visited.has(neighborKey)) {
-            const neighbor = tilesMap.get(neighborKey)
-            // Include navigable tiles and mountains in connectivity
-            if (neighbor && (isNavigable(neighbor.type) || neighbor.type === TileType.Mountain)) {
-              visited.add(neighborKey)
-              component.add(neighborKey)
-              queue.push([nx, ny])
-            }
-          }
+      if (!visited.has(neighborKey) && nx >= 0 && nx < C.MAP_WIDTH && ny >= 0 && ny < C.MAP_HEIGHT) {
+        const neighbor = tilesMap.get(neighborKey)
+        if (neighbor && neighbor.type === TileType.Water) {
+          visited.add(neighborKey)
+          queue.push([nx, ny])
         }
       }
-
-      components.push(component)
     }
   }
 
-  // Return the largest landmass
-  let largest = new Set<string>()
-  for (const component of components) {
-    if (component.size > largest.size) {
-      largest = component
-    }
-  }
-
-  return largest
+  return visited
 }
 
 function ensureSingleIsland(tiles: Tile[]): Tile[] {
-  // Find the largest connected landmass (navigable + mountains)
-  const island = findLargestLandmass(tiles)
+  // Find all water connected to map edges
+  const edgeWater = findEdgeWater(tiles)
 
-  // Convert all other tiles to water (both navigable land and mountains)
+  // Convert inner water to jungle, keep edge water as water
   return tiles.map(tile => {
     const key = `${tile.x},${tile.y}`
-    if ((isNavigable(tile.type) || tile.type === TileType.Mountain) && !island.has(key)) {
-      return { ...tile, type: TileType.Water, hasLog: false }
+
+    if (tile.type === TileType.Water && !edgeWater.has(key)) {
+      // Inner water becomes jungle with potential logs
+      return { ...tile, type: TileType.Jungle, hasLog: Math.random() < C.LOG_SPAWN_CHANCE_JUNGLE }
     }
+
+    // Everything else stays the same
     return tile
   })
+}
+
+export function generateIslandName(seed: number): string {
+  const adjectives = ['Dinghy', 'Skull', 'Treasure', 'Lost', 'Hidden', 'Whisper', 'Storm', 'Golden', 'Crimson', 'Silent', 'Mystic', 'Dragon']
+  const nouns = ['Island', 'Key', 'Cove', 'Point', 'Reef', 'Haven', 'Shoal', 'Atoll', 'Cape', 'Islet']
+
+  const rng = new SeededRandom(seed)
+  const adjIdx = Math.floor(rng.next() * adjectives.length)
+  const nounIdx = Math.floor(rng.next() * nouns.length)
+
+  return `${adjectives[adjIdx]} ${nouns[nounIdx]}`
 }
 
 export function generateMap(seed: number): GridState {
@@ -148,7 +150,7 @@ export function generateMap(seed: number): GridState {
   }
 
   // Ensure only ONE connected island exists
-  // This keeps the largest landmass and converts all fragmented pieces to water
+  // This keeps the largest landmass and converts inner water to jungle
   const processedTiles = ensureSingleIsland(tiles)
 
   const tilesMap = new Map<string, Tile>()
