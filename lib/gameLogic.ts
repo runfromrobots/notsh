@@ -15,6 +15,7 @@ export function initializeGame(gameId: string, code: string, mapSeed: number): G
     mapSeed,
     sosPositions: [],
     rescuedPlayers: [],
+    isLocked: false,
   }
 }
 
