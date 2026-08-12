@@ -311,84 +311,53 @@
             return tiles[y * MAP_WIDTH + x];
         }
 
-        function isConnected(tiles) {
-            // Find first land tile
-            let startX = -1, startY = -1;
-            for (let i = 0; i < tiles.length; i++) {
-                if (isNavigable(tiles[i].type)) {
-                    startX = tiles[i].x;
-                    startY = tiles[i].y;
-                    break;
-                }
-            }
-
-            if (startX === -1) return false; // No land tiles
-
-            // Flood fill to check connectivity
-            const visited = new Set();
-            const queue = [[startX, startY]];
-            visited.add(`${startX},${startY}`);
-
-            while (queue.length > 0) {
-                const [x, y] = queue.shift();
-
-                for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
-                    const nx = x + dx;
-                    const ny = y + dy;
-                    const key = `${nx},${ny}`;
-
-                    if (!visited.has(key)) {
-                        const tile = getTile(nx, ny, tiles);
-                        if (tile && isNavigable(tile.type)) {
-                            visited.add(key);
-                            queue.push([nx, ny]);
-                        }
-                    }
-                }
-            }
-
-            // Count all navigable tiles
-            let navigableCount = 0;
-            for (const tile of tiles) {
-                if (isNavigable(tile.type)) navigableCount++;
-            }
-
-            return visited.size === navigableCount;
-        }
 
         function generateMap(seed) {
-            let tiles;
-            let attempts = 0;
-            const maxAttempts = 50;
+            const tiles = [];
+            const rng = new SeededRandom(seed);
+            const centerX = MAP_WIDTH / 2;
+            const centerY = MAP_HEIGHT / 2;
+            const maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
 
-            do {
-                tiles = [];
-                const rng = new SeededRandom(seed + attempts);
+            for (let y = 0; y < MAP_HEIGHT; y++) {
+                for (let x = 0; x < MAP_WIDTH; x++) {
+                    // Distance from center determines land/water boundary
+                    const dx = x - centerX;
+                    const dy = y - centerY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const distRatio = dist / maxDist;
 
-                for (let y = 0; y < MAP_HEIGHT; y++) {
-                    for (let x = 0; x < MAP_WIDTH; x++) {
-                        const noise = perlinNoise(x, y, seed + attempts);
-                        let type = getTileType(noise);
+                    // Use noise + distance to create organic island shape
+                    const noise = perlinNoise(x, y, seed);
+                    const islandThreshold = 0.55 + (noise * 0.15); // 0.4 to 0.7 range
 
-                        // Add shore tiles at edges
-                        const isEdge = x < 3 || x > MAP_WIDTH - 4 || y < 3 || y > MAP_HEIGHT - 4;
-                        if (isEdge && type !== 'water' && type !== 'mountain') {
-                            if (rng.next() > 0.6) type = 'shore';
-                        }
-
-                        const hasLog = isNavigable(type) && rng.next() < LOG_SPAWN_CHANCE[type];
-
-                        tiles.push({
-                            x,
-                            y,
-                            type,
-                            hasLog,
-                        });
+                    let type;
+                    if (distRatio > islandThreshold) {
+                        // Water
+                        type = 'water';
+                    } else {
+                        // Land - assign terrain type based on noise
+                        if (noise < 0.25) type = 'mountain';
+                        else if (noise < 0.35) type = 'beach';
+                        else if (noise < 0.65) type = 'jungle';
+                        else type = 'shore';
                     }
-                }
 
-                attempts++;
-            } while (!isConnected(tiles) && attempts < maxAttempts);
+                    // Add some shore tiles at coastline
+                    if (type !== 'water' && distRatio > islandThreshold - 0.1 && distRatio < islandThreshold + 0.05) {
+                        if (rng.next() > 0.5) type = 'shore';
+                    }
+
+                    const hasLog = type !== 'water' && type !== 'mountain' && rng.next() < LOG_SPAWN_CHANCE[type];
+
+                    tiles.push({
+                        x,
+                        y,
+                        type,
+                        hasLog,
+                    });
+                }
+            }
 
             return tiles;
         }
@@ -545,71 +514,6 @@
             );
         }
 
-        function findEdgeWater(tiles) {
-            const tilesMap = new Map();
-            for (const tile of tiles) {
-                tilesMap.set(`${tile.x},${tile.y}`, tile);
-            }
-
-            // Start flood fill from all water on the edges
-            const visited = new Set();
-            const queue = [];
-
-            // Add all edge water tiles to queue
-            for (const tile of tiles) {
-                if (tile.type === 'water') {
-                    if (tile.x === 0 || tile.x === MAP_WIDTH - 1 || tile.y === 0 || tile.y === MAP_HEIGHT - 1) {
-                        const key = `${tile.x},${tile.y}`;
-                        queue.push([tile.x, tile.y]);
-                        visited.add(key);
-                    }
-                }
-            }
-
-            // Flood fill to find all water connected to edges
-            while (queue.length > 0) {
-                const [x, y] = queue.shift();
-
-                for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
-                    const nx = x + dx;
-                    const ny = y + dy;
-                    const neighborKey = `${nx},${ny}`;
-
-                    if (!visited.has(neighborKey) && nx >= 0 && nx < MAP_WIDTH && ny >= 0 && ny < MAP_HEIGHT) {
-                        const neighbor = tilesMap.get(neighborKey);
-                        if (neighbor && neighbor.type === 'water') {
-                            visited.add(neighborKey);
-                            queue.push([nx, ny]);
-                        }
-                    }
-                }
-            }
-
-            return visited;
-        }
-
-        function ensureSingleIsland(tiles) {
-            const edgeWater = findEdgeWater(tiles);
-
-            // Convert all water not connected to edges into land
-            // Convert all other land fragments to water
-            return tiles.map(tile => {
-                const key = `${tile.x},${tile.y}`;
-
-                if (tile.type === 'water' && !edgeWater.has(key)) {
-                    // Inner water becomes jungle
-                    return { ...tile, type: 'jungle', hasLog: true };
-                }
-
-                if (tile.type === 'water' && edgeWater.has(key)) {
-                    // Edge water stays water
-                    return tile;
-                }
-
-                // All land stays land
-                return tile;
-            });
-        }
 
         function generateIslandName(seed) {
             const adjectives = ['Dinghy', 'Skull', 'Treasure', 'Lost', 'Hidden', 'Whisper', 'Storm', 'Golden', 'Crimson', 'Silent', 'Mystic', 'Dragon'];
@@ -627,8 +531,6 @@
             const seed = getSeedValue(seedInput);
             let tiles = generateMap(seed);
 
-            // Ensure only ONE connected island and convert inner water to land
-            tiles = ensureSingleIsland(tiles);
             currentMap = tiles;
 
             // Generate and display island name

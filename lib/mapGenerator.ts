@@ -124,20 +124,40 @@ export function generateIslandName(seed: number): string {
 export function generateMap(seed: number): GridState {
   const tiles: Tile[] = []
   const rng = new SeededRandom(seed)
+  const centerX = C.MAP_WIDTH / 2
+  const centerY = C.MAP_HEIGHT / 2
+  const maxDist = Math.sqrt(centerX * centerX + centerY * centerY)
 
-  // Generate base terrain using noise
+  // Generate island based on distance from center + noise for organic shape
   for (let y = 0; y < C.MAP_HEIGHT; y++) {
     for (let x = 0; x < C.MAP_WIDTH; x++) {
-      const noise = perlinNoise(x, y, seed)
-      let type = getTileType(noise)
+      // Distance from center determines land/water boundary
+      const dx = x - centerX
+      const dy = y - centerY
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      const distRatio = dist / maxDist
 
-      // Add some shore tiles between water and land (more natural coastlines)
-      const isEdge = x < 3 || x > C.MAP_WIDTH - 4 || y < 3 || y > C.MAP_HEIGHT - 4
-      if (isEdge && type !== TileType.Water && type !== TileType.Mountain) {
-        if (rng.next() > 0.6) type = TileType.Shore
+      // Use noise + distance to create organic island shape
+      const noise = perlinNoise(x, y, seed)
+      const islandThreshold = 0.55 + (noise * 0.15) // 0.4 to 0.7 range
+
+      let type: TileType
+      if (distRatio > islandThreshold) {
+        type = TileType.Water
+      } else {
+        // Land - assign terrain type based on noise
+        if (noise < 0.25) type = TileType.Mountain
+        else if (noise < 0.35) type = TileType.Beach
+        else if (noise < 0.65) type = TileType.Jungle
+        else type = TileType.Shore
       }
 
-      const hasLog = isNavigable(type) && shouldSpawnLog(type, rng)
+      // Add some shore tiles at coastline
+      if (type !== TileType.Water && distRatio > islandThreshold - 0.1 && distRatio < islandThreshold + 0.05) {
+        if (rng.next() > 0.5) type = TileType.Shore
+      }
+
+      const hasLog = type !== TileType.Water && type !== TileType.Mountain && shouldSpawnLog(type, rng)
 
       tiles.push({
         x,
@@ -149,12 +169,8 @@ export function generateMap(seed: number): GridState {
     }
   }
 
-  // Ensure only ONE connected island exists
-  // This keeps the largest landmass and converts inner water to jungle
-  const processedTiles = ensureSingleIsland(tiles)
-
   const tilesMap = new Map<string, Tile>()
-  for (const tile of processedTiles) {
+  for (const tile of tiles) {
     tilesMap.set(`${tile.x},${tile.y}`, tile)
   }
 
