@@ -291,6 +291,59 @@
   }
 }
 
+.coinFlipButtons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  justify-content: center;
+}
+
+.coinBtn {
+  padding: 1rem 1.5rem;
+  background: #FF1744;
+  color: #FFFFFF;
+  border: 2px solid #FFD700;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.coinBtn:hover {
+  background: #FFD700;
+  color: #0D1117;
+  transform: scale(1.05);
+}
+
+.coinAnimation {
+  font-size: 4rem;
+  animation: coinSpin 0.5s infinite;
+  margin: 1.5rem 0;
+}
+
+@keyframes coinSpin {
+  0%, 100% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(180deg);
+  }
+}
+
+.coinResultText {
+  font-size: 1.2rem;
+  color: #FFD700;
+  margin: 1rem 0;
+}
+
+.coinWinner {
+  font-size: 1.3rem;
+  color: #00BCD4;
+  font-weight: bold;
+  margin-top: 1rem;
+}
+
 /* Scrollbar styling */
 .sidebar::-webkit-scrollbar {
   width: 6px;

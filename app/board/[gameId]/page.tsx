@@ -62,6 +62,10 @@ export default function Board() {
   const [selectedAction, setSelectedAction] = useState<'move' | 'place-log' | null>(null)
   const [showRPSModal, setShowRPSModal] = useState(false)
   const [showRescueModal, setShowRescueModal] = useState(false)
+  const [showCoinFlip, setShowCoinFlip] = useState(false)
+  const [coinFlipping, setCoinFlipping] = useState(false)
+  const [coinResult, setCoinResult] = useState<'heads' | 'tails' | null>(null)
+  const [playerChoice, setPlayerChoice] = useState<'heads' | 'tails' | null>(null)
 
   useEffect(() => {
     const name = localStorage.getItem('playerName')
@@ -80,6 +84,13 @@ export default function Board() {
       setCurrentPlayer(current)
     }
   }, [playerName, players])
+
+  useEffect(() => {
+    // Show coin flip if both players joined but currentPlayerFaction is not set yet
+    if (players.length === 2 && game?.currentTurnInDay === 0 && !coinFlipping && !coinResult) {
+      setShowCoinFlip(true)
+    }
+  }, [players.length, game?.currentTurnInDay, coinFlipping, coinResult])
 
   useEffect(() => {
     if (canvasRef.current && (tiles?.length || 0) > 0 && currentPlayer) {
@@ -318,6 +329,40 @@ export default function Board() {
     }
   }
 
+  const handleCoinFlip = async (choice: 'heads' | 'tails') => {
+    setPlayerChoice(choice)
+    setCoinFlipping(true)
+
+    // Simulate coin flip animation
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
+    // Random result
+    const result = Math.random() > 0.5 ? 'heads' : 'tails'
+    setCoinResult(result)
+
+    // Determine winner faction
+    const winnerFaction = result === 'heads' ? 'pirates' : 'navy'
+    const playerWon = (currentPlayer?.faction === 'pirates' && result === 'heads') ||
+                      (currentPlayer?.faction === 'navy' && result === 'tails')
+
+    // Set the starting faction
+    try {
+      await fetch(`/api/games/${gameId}/coin-flip`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ startingFaction: winnerFaction }),
+      })
+
+      // Wait a bit for dramatic effect, then close modal and fetch updated state
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+      setShowCoinFlip(false)
+      fetchGameState()
+    } catch (error) {
+      console.error('Coin flip error:', error)
+      alert('Failed to set starting player')
+    }
+  }
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -458,6 +503,51 @@ export default function Board() {
             <button onClick={() => router.push(`/results/${gameId}`)}>
               View Results
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Coin Flip Modal */}
+      {showCoinFlip && (
+        <div className={styles.modal}>
+          <div className={styles.modalContent}>
+            <h2>Who Goes First?</h2>
+            {!coinFlipping ? (
+              <>
+                <p>Call the coin flip!</p>
+                <div className={styles.coinFlipButtons}>
+                  <button
+                    onClick={() => handleCoinFlip('heads')}
+                    className={styles.coinBtn}
+                  >
+                    🪙 Heads
+                  </button>
+                  <button
+                    onClick={() => handleCoinFlip('tails')}
+                    className={styles.coinBtn}
+                  >
+                    🪙 Tails
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={styles.coinAnimation}>🪙</div>
+                {coinResult && (
+                  <>
+                    <p className={styles.coinResultText}>
+                      The coin landed on <strong>{coinResult.toUpperCase()}</strong>!
+                    </p>
+                    <p className={styles.coinWinner}>
+                      {(currentPlayer?.faction === 'pirates' && coinResult === 'heads') ||
+                       (currentPlayer?.faction === 'navy' && coinResult === 'tails')
+                        ? '✨ You go first! ✨'
+                        : '⏳ Opponent goes first'}
+                    </p>
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}
