@@ -133,7 +133,7 @@ export function generateMap(seed: number): GridState {
   const centerX = C.MAP_WIDTH / 2
   const centerY = C.MAP_HEIGHT / 2
   const islandRadius = 20
-  const edgeThickness = 3 // How many tiles thick the shore ring is
+  const shoreThickness = 5 // Thicker shore ring
 
   // First pass: Determine which tiles are island
   const islandTiles = new Set<string>()
@@ -161,10 +161,10 @@ export function generateMap(seed: number): GridState {
         // Water
         type = TileType.Water
       } else {
-        // Check if this is an edge tile (close to water)
+        // Check if this is a shore tile (close to water)
         let distToWater = Infinity
-        for (let dy = -edgeThickness; dy <= edgeThickness; dy++) {
-          for (let dx = -edgeThickness; dx <= edgeThickness; dx++) {
+        for (let dy = -shoreThickness; dy <= shoreThickness; dy++) {
+          for (let dx = -shoreThickness; dx <= shoreThickness; dx++) {
             const nx = x + dx
             const ny = y + dy
             if (!islandTiles.has(`${nx},${ny}`)) {
@@ -174,14 +174,18 @@ export function generateMap(seed: number): GridState {
           }
         }
 
-        if (distToWater <= edgeThickness) {
-          // Shore ring
+        if (distToWater <= shoreThickness) {
+          // SHORE RING: 5 tiles thick of beach
           type = TileType.Beach
         } else {
-          // Interior: jungle with mountain clusters
-          const noise = perlinNoise(x, y, seed)
-          // Mountain clusters: use noise to create patches
-          if (noise < 0.08) {
+          // INTERIOR: Jungle with large mountain ranges
+          // Use coarser noise (lower frequency) for larger mountain clusters
+          const coarseX = Math.floor(x / 4)
+          const coarseY = Math.floor(y / 4)
+          const clusterNoise = perlinNoise(coarseX, coarseY, seed)
+
+          // 25% of interior is mountain clusters (large contiguous blocks)
+          if (clusterNoise < 0.25) {
             type = TileType.Mountain
           } else {
             type = TileType.Jungle
