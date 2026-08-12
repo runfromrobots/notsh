@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getGame, getPlayers, getTile, updatePlayer, updateTile, recordMove, updateGame } from '@/lib/db'
+import { getGame, getPlayers, getTiles, updatePlayer, updateTile, recordMove, updateGame } from '@/lib/db'
 import { generateMap } from '@/lib/mapGenerator'
-import { processMove } from '@/lib/gameLogic'
 import { Faction, MoveType, GameStatus } from '@/lib/types'
 
 export async function POST(
@@ -28,7 +27,7 @@ export async function POST(
       )
     }
 
-    if (game.status !== GameStatus.Active) {
+    if (game.status !== GameStatus.Active && game.status !== GameStatus.Waiting) {
       return NextResponse.json(
         { success: false, error: 'Game not active' },
         { status: 400 }
@@ -54,41 +53,48 @@ export async function POST(
       )
     }
 
-    // Get target tile
-    const targetTile = await getTile(gameId, targetX, targetY)
-    if (!targetTile) {
+    // Validate adjacent movement (max 1 tile away)
+    const distance = Math.max(Math.abs(targetX - player.x), Math.abs(targetY - player.y))
+    if (distance !== 1) {
       return NextResponse.json(
-        { success: false, error: 'Invalid tile' },
+        { success: false, error: 'Can only move to adjacent tiles' },
         { status: 400 }
       )
     }
 
-    // Generate map for validation (we could cache this)
-    const mapData = generateMap(game.mapSeed)
-
-    // Process the move
-    const result = processMove(player, targetX, targetY, mapData)
-    if (!result.success) {
+    // Validate within bounds (64x64 map)
+    if (targetX < 0 || targetX >= 64 || targetY < 0 || targetY >= 64) {
       return NextResponse.json(
-        { success: false, error: result.message },
+        { success: false, error: 'Move out of bounds' },
         { status: 400 }
       )
     }
 
-    // Update player position and turns
+    // Update player position
     await updatePlayer(gameId, playerId, {
-      x: player.x,
-      y: player.y,
-      carrying: player.carrying,
-      turnsUsedToday: player.turnsUsedToday,
+      x: targetX,
+      y: targetY,
+      turnsUsedToday: player.turnsUsedToday + 1,
     })
 
-    // Update tile if revealed
-    await updateTile(gameId, targetX, targetY, {
-      isRevealed: targetTile.isRevealed,
-      lastRevealedBy: targetTile.lastRevealedBy,
-      hasLog: targetTile.hasLog,
-    })
+    // Generate map to know which tiles exist
+    const mapData = generateMap(game.mapSeed)
+    const mapTiles = Array.from(mapData.tiles.values())
+
+    // Reveal target tile and surrounding 1-tile radius
+    const tilesToReveal = mapTiles.filter(
+      (tile) =>
+        Math.abs(tile.x - targetX) <= 1 &&
+        Math.abs(tile.y - targetY) <= 1
+    )
+
+    // Update all revealed tiles
+    for (const tile of tilesToReveal) {
+      await updateTile(gameId, tile.x, tile.y, {
+        isRevealed: true,
+        lastRevealedBy: playerId,
+      })
+    }
 
     // Record move in history
     const moveId = `move_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -112,7 +118,7 @@ export async function POST(
     const newDayNumber = nextTurnInDay >= 12 ? game.dayNumber + 1 : game.dayNumber
     const newTurnInDay = nextTurnInDay >= 12 ? 0 : nextTurnInDay
 
-    // Lock game on first move
+    // Lock game on first move if not already locked
     const gameUpdates: any = {
       currentPlayerFaction: nextFaction,
       dayNumber: newDayNumber,
@@ -128,6 +134,7 @@ export async function POST(
       nextPlayer: nextFaction,
       dayNumber: newDayNumber,
       turnInDay: newTurnInDay,
+      revealedTiles: tilesToReveal.length,
     })
   } catch (error) {
     console.error('Error processing move:', error)

@@ -87,6 +87,47 @@ export default function Board() {
     }
   }, [tiles, currentPlayer, game]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!currentPlayer || !game) return
+
+      // Check if it's this player's turn
+      if (game.currentPlayerFaction !== currentPlayer.faction) return
+
+      let targetX = currentPlayer.x
+      let targetY = currentPlayer.y
+
+      switch (e.key) {
+        case 'ArrowUp':
+          targetY = Math.max(0, currentPlayer.y - 1)
+          e.preventDefault()
+          break
+        case 'ArrowDown':
+          targetY = Math.min(63, currentPlayer.y + 1)
+          e.preventDefault()
+          break
+        case 'ArrowLeft':
+          targetX = Math.max(0, currentPlayer.x - 1)
+          e.preventDefault()
+          break
+        case 'ArrowRight':
+          targetX = Math.min(63, currentPlayer.x + 1)
+          e.preventDefault()
+          break
+        default:
+          return
+      }
+
+      // Only move if position actually changed
+      if (targetX !== currentPlayer.x || targetY !== currentPlayer.y) {
+        handleMove(targetX, targetY)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [currentPlayer, game]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const fetchGameState = async () => {
     try {
       const res = await fetch(`/api/games?id=${gameId}`)
