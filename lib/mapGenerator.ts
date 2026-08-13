@@ -209,7 +209,7 @@ export function generateMap(seed: number): GridState {
         }
       }
 
-      const isMountain = type === TileType.Mountain || type === TileType.MountainBase || type === TileType.MountainMid || type === TileType.MountainPeak
+      const isMountain = type === TileType.MountainBase || type === TileType.MountainMid || type === TileType.MountainPeak
       const hasLog = type !== TileType.Water && !isMountain && shouldSpawnLog(type, rng)
 
       tiles.push({
