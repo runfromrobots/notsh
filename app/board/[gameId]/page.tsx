@@ -578,7 +578,7 @@ export default function Board() {
             <p className={styles.notificationTurn}>
               {isYourTurn
                 ? "It's your turn - click Begin Game to start!"
-                : `${opponent?.name || 'Opponent'}'s Turn`}
+                : `${opponent?.name || 'Opponent'}&apos;s Turn`}
             </p>
           </div>
         </div>
@@ -588,7 +588,7 @@ export default function Board() {
       {gameStarted && !isYourTurn && gameStartNotified && (
         <div className={styles.opponentTurnOverlay}>
           <div className={styles.opponentTurnContent}>
-            <p>{opponent?.name || 'Opponent'}'s Turn</p>
+            <p>{opponent?.name || 'Opponent'}&apos;s Turn</p>
           </div>
         </div>
       )}
