@@ -344,6 +344,76 @@
   margin-top: 1rem;
 }
 
+.notification {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, #0D1117 0%, #1a1a2e 100%);
+  border: 3px solid #00BCD4;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  z-index: 900;
+  animation: slideIn 0.3s ease-out;
+}
+
+.notificationContent {
+  max-width: 400px;
+}
+
+.notificationContent h2 {
+  margin: 0 0 1rem 0;
+  font-size: 2rem;
+  color: #00BCD4;
+}
+
+.notificationTurn {
+  font-size: 1.2rem;
+  color: #FFD700;
+  margin: 0;
+  font-weight: bold;
+}
+
+.beginBtn {
+  background: #00BCD4;
+  color: #0D1117;
+  border: 2px solid #FFD700;
+  font-size: 1.1rem;
+  padding: 1rem 2rem;
+}
+
+.beginBtn:hover {
+  background: #FFD700;
+  border-color: #00BCD4;
+  transform: scale(1.05);
+}
+
+.opponentTurnOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 800;
+  pointer-events: none;
+}
+
+.opponentTurnContent {
+  background: linear-gradient(135deg, #FF1744 0%, #FFD700 100%);
+  color: #0D1117;
+  padding: 2rem 4rem;
+  border-radius: 12px;
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  animation: slideIn 0.3s ease-out;
+}
+
 /* Scrollbar styling */
 .sidebar::-webkit-scrollbar {
   width: 6px;

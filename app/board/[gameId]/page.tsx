@@ -66,6 +66,8 @@ export default function Board() {
   const [showCoinFlip, setShowCoinFlip] = useState(false)
   const [coinFlipping, setCoinFlipping] = useState(false)
   const [coinResult, setCoinResult] = useState<'heads' | 'tails' | null>(null)
+  const [gameStarted, setGameStarted] = useState(false)
+  const [gameStartNotified, setGameStartNotified] = useState(false)
 
   useEffect(() => {
     const name = localStorage.getItem('playerName')
@@ -93,8 +95,12 @@ export default function Board() {
     } else if (players.length === 2 && game?.currentPlayerFaction) {
       console.log('[CoinFlip] currentPlayerFaction is set, closing modal')
       setShowCoinFlip(false)
+      // Show game started notification when coin flip completes
+      if (!gameStartNotified) {
+        setGameStartNotified(true)
+      }
     }
-  }, [players.length, game?.currentPlayerFaction, coinFlipping, coinResult])
+  }, [players.length, game?.currentPlayerFaction, coinFlipping, coinResult, gameStartNotified])
 
   useEffect(() => {
     if (canvasRef.current && (tiles?.length || 0) > 0 && currentPlayer) {
@@ -108,6 +114,9 @@ export default function Board() {
 
       // Check if it's this player's turn
       if (game.currentPlayerFaction !== currentPlayer.faction) return
+
+      // Check if game has been started
+      if (!gameStarted) return
 
       let targetX = currentPlayer.x
       let targetY = currentPlayer.y
@@ -141,7 +150,7 @@ export default function Board() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [currentPlayer, game]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentPlayer, game, gameStarted]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchGameState = async () => {
     try {
@@ -261,6 +270,7 @@ export default function Board() {
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!currentPlayer || !game) return
     if (game.currentPlayerFaction !== currentPlayer.faction) return
+    if (!gameStarted) return
     if (!selectedAction) return
 
     const canvas = canvasRef.current
@@ -431,7 +441,7 @@ export default function Board() {
           <div className={styles.movementControls}>
             <button
               onClick={() => handleMove(currentPlayer!.x, Math.max(0, currentPlayer!.y - 1))}
-              disabled={!isYourTurn}
+              disabled={!isYourTurn || !gameStarted}
               className={styles.arrowBtn}
               title="Move Up"
             >
@@ -440,7 +450,7 @@ export default function Board() {
             <div className={styles.arrowRow}>
               <button
                 onClick={() => handleMove(Math.max(0, currentPlayer!.x - 1), currentPlayer!.y)}
-                disabled={!isYourTurn}
+                disabled={!isYourTurn || !gameStarted}
                 className={styles.arrowBtn}
                 title="Move Left"
               >
@@ -448,7 +458,7 @@ export default function Board() {
               </button>
               <button
                 onClick={() => handleMove(Math.min(63, currentPlayer!.x + 1), currentPlayer!.y)}
-                disabled={!isYourTurn}
+                disabled={!isYourTurn || !gameStarted}
                 className={styles.arrowBtn}
                 title="Move Right"
               >
@@ -457,7 +467,7 @@ export default function Board() {
             </div>
             <button
               onClick={() => handleMove(currentPlayer!.x, Math.min(63, currentPlayer!.y + 1))}
-              disabled={!isYourTurn}
+              disabled={!isYourTurn || !gameStarted}
               className={styles.arrowBtn}
               title="Move Down"
             >
@@ -465,7 +475,18 @@ export default function Board() {
             </button>
           </div>
 
-          {isYourTurn && (
+          {isYourTurn && !gameStarted && (
+            <div className={styles.actions}>
+              <button
+                onClick={() => setGameStarted(true)}
+                className={`${styles.actionBtn} ${styles.beginBtn}`}
+              >
+                Begin Game
+              </button>
+            </div>
+          )}
+
+          {isYourTurn && gameStarted && (
             <div className={styles.actions}>
               <button
                 onClick={() => setSelectedAction('move')}
@@ -545,6 +566,29 @@ export default function Board() {
                 )}
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Game Started Notification */}
+      {gameStartNotified && !showCoinFlip && (
+        <div className={styles.notification}>
+          <div className={styles.notificationContent}>
+            <h2>⛵ Game Started!</h2>
+            <p className={styles.notificationTurn}>
+              {isYourTurn
+                ? "It's your turn - click Begin Game to start!"
+                : `${opponent?.name || 'Opponent'}'s Turn`}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Opponent Turn Indicator */}
+      {gameStarted && !isYourTurn && gameStartNotified && (
+        <div className={styles.opponentTurnOverlay}>
+          <div className={styles.opponentTurnContent}>
+            <p>{opponent?.name || 'Opponent'}'s Turn</p>
           </div>
         </div>
       )}
