@@ -54,11 +54,6 @@ function shouldSpawnLog(type: TileType, rng: SeededRandom): boolean {
   return false
 }
 
-function getTile(x: number, y: number, tiles: Tile[]): Tile | null {
-  if (x < 0 || x >= C.MAP_WIDTH || y < 0 || y >= C.MAP_HEIGHT) return null
-  return tiles[y * C.MAP_WIDTH + x] || null
-}
-
 function findEdgeWater(tiles: Tile[]): Set<string> {
   const tilesMap = new Map<string, Tile>()
 
