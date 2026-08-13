@@ -71,10 +71,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update game status to active with first player's faction
+    // Update game status to waiting for second player
     await updateGame(game.id, {
-      status: GameStatus.Active,
-      currentPlayerFaction: Faction.Pirates,
+      status: GameStatus.Waiting,
     })
 
     return NextResponse.json({
