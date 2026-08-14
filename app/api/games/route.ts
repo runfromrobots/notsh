@@ -27,8 +27,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Map will be regenerated from seed on each fetch (no need to save 3000 tiles)
-
     // Create first player (Pirates)
     const playerId1 = `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const player1 = initializePlayer(playerId1, playerName.trim(), Faction.Pirates)
@@ -41,7 +39,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Spawn player on map (Pirates spawn at North pole)
+    // Generate map to spawn player (Pirates spawn at North pole)
+    const mapData = generateMap(game.mapSeed)
+    const tilesArray = Array.from(mapData.tiles.values())
+
     // Only spawn on navigable land tiles (Beach, Jungle, Shore - not Water or Mountain)
     const navigableTiles = tilesArray.filter((tile) => ['beach', 'jungle', 'shore'].includes(tile.type))
 
