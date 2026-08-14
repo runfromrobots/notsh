@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getGame, getPlayers, getTiles, updatePlayer, updateTile, recordMove, updateGame } from '@/lib/db'
+import { getGame, getPlayers, updatePlayer, recordMove, updateGame } from '@/lib/db'
 import { generateMap } from '@/lib/mapGenerator'
 import { Faction, MoveType, GameStatus } from '@/lib/types'
 
@@ -77,24 +77,16 @@ export async function POST(
       turnsUsedToday: player.turnsUsedToday + 1,
     })
 
-    // Generate map to know which tiles exist
+    // Generate map to know which tiles are revealed (for UI, not stored in DB)
     const mapData = generateMap(game.mapSeed)
     const mapTiles = Array.from(mapData.tiles.values())
 
-    // Reveal target tile and surrounding 1-tile radius
+    // Reveal target tile and surrounding 1-tile radius (frontend will handle)
     const tilesToReveal = mapTiles.filter(
       (tile) =>
         Math.abs(tile.x - targetX) <= 1 &&
         Math.abs(tile.y - targetY) <= 1
     )
-
-    // Update all revealed tiles
-    for (const tile of tilesToReveal) {
-      await updateTile(gameId, tile.x, tile.y, {
-        isRevealed: true,
-        lastRevealedBy: playerId,
-      })
-    }
 
     // Record move in history
     const moveId = `move_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
