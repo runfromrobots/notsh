@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateMap } from '@/lib/mapGenerator'
-import { createGame, getGame, getTiles, upsertTiles, createPlayer, updateGame, updatePlayer, getPlayers } from '@/lib/db'
+import { createGame, getGame, createPlayer, updateGame, updatePlayer, getPlayers } from '@/lib/db'
 import { initializePlayer } from '@/lib/gameLogic'
 import { Faction, GameStatus } from '@/lib/types'
 
@@ -27,19 +27,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate map tiles with logs
-    const mapData = generateMap(game.mapSeed)
-
-    // Save tiles to database
-    const tilesArray = Array.from(mapData.tiles.values())
-    const tilesSaved = await upsertTiles(game.id, tilesArray)
-
-    if (!tilesSaved) {
-      return NextResponse.json(
-        { success: false, error: 'Failed to save map' },
-        { status: 500 }
-      )
-    }
+    // Map will be regenerated from seed on each fetch (no need to save 3000 tiles)
 
     // Create first player (Pirates)
     const playerId1 = `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -118,7 +106,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const tiles = await getTiles(game.id)
+    // Regenerate map from seed instead of fetching from DB
+    const mapData = generateMap(game.mapSeed)
+    const tiles = Array.from(mapData.tiles.values())
     const players = await getPlayers(game.id)
 
     return NextResponse.json({

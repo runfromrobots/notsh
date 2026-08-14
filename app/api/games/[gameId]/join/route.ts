@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getGame, getPlayers, createPlayer, updateGame, updatePlayer } from '@/lib/db'
 import { initializePlayer } from '@/lib/gameLogic'
 import { Faction, GameStatus } from '@/lib/types'
-import { generateMap as generateMapData } from '@/lib/mapGenerator'
+import { generateMap } from '@/lib/mapGenerator'
 
 export async function POST(
   request: NextRequest,
@@ -62,7 +62,7 @@ export async function POST(
 
     // If this is the second player, spawn them on map and start the game
     if (players.length === 1) {
-      const mapData = generateMapData(game.mapSeed)
+      const mapData = generateMap(game.mapSeed)
       const tilesArray = Array.from(mapData.tiles.values())
 
       // Spawn second player (Navy at South pole)
