@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { generateMap } from '@/lib/mapGenerator'
 import styles from './explore-test.module.css'
 
+export const dynamic = 'force-dynamic'
+
 interface Tile {
   x: number
   y: number
