@@ -90,10 +90,15 @@ export default function Board() {
 
   useEffect(() => {
     // Show coin flip if both players joined but currentPlayerFaction is not set yet
-    if (players.length === 2 && !game?.currentPlayerFaction && !coinFlipping && !coinResult) {
+    if (players.length === 2 && !game?.currentPlayerFaction) {
       console.log('[CoinFlip] Condition met: showing coin flip modal')
       setShowCoinFlip(true)
-    } else if (players.length === 2 && game?.currentPlayerFaction) {
+    }
+  }, [players.length, game?.currentPlayerFaction])
+
+  useEffect(() => {
+    // When currentPlayerFaction is set, close modal and show notification
+    if (game?.currentPlayerFaction && showCoinFlip) {
       console.log('[CoinFlip] currentPlayerFaction is set, closing modal')
       setShowCoinFlip(false)
       // Show game started notification when coin flip completes
@@ -101,7 +106,7 @@ export default function Board() {
         setGameStartNotified(true)
       }
     }
-  }, [players.length, game?.currentPlayerFaction, coinFlipping, coinResult, gameStartNotified])
+  }, [game?.currentPlayerFaction, showCoinFlip, gameStartNotified])
 
   useEffect(() => {
     if (canvasRef.current && (tiles?.length || 0) > 0 && currentPlayer) {
