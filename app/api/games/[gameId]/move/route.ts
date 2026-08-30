@@ -79,11 +79,12 @@ export async function POST(
       )
     }
 
-    // Update player position (don't pass stepsUsedThisTurn yet as column may not exist)
+    // Update player position and step count
     await updatePlayer(gameId, playerId, {
       x: targetX,
       y: targetY,
       lastMoveTime: Date.now(),
+      stepsUsedThisTurn: stepsUsed + 1,
     })
 
     // Generate map to know which tiles are revealed (for UI, not stored in DB)

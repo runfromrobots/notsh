@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import styles from './board.module.css'
+import { Faction, GameStatus } from '@/lib/types'
 
 // Coin flip debugging enabled
 
@@ -17,7 +18,7 @@ interface Tile {
 interface Player {
   id: string
   name: string
-  faction: string
+  faction: Faction
   x: number
   y: number
   carrying: boolean
@@ -31,7 +32,7 @@ interface Game {
   id: string
   code: string
   status: string
-  currentPlayerFaction: string
+  currentPlayerFaction: Faction
   dayNumber: number
   currentTurnInDay: number
   sosPositions: Array<{ x: number; y: number }>
@@ -256,7 +257,7 @@ export default function Board() {
         const canvasY = y * TILE_SIZE + TILE_SIZE / 2
 
         ctx.fillStyle =
-          player.faction === 'pirates' ? '#FF1744' : '#00BCD4'
+          player.faction === Faction.Pirates ? '#FF1744' : '#00BCD4'
         ctx.beginPath()
         ctx.arc(canvasX, canvasY, 5, 0, Math.PI * 2)
         ctx.fill()
@@ -387,7 +388,7 @@ export default function Board() {
     setCoinResult(result)
 
     // Determine winner faction
-    const winnerFaction = result === 'heads' ? 'pirates' : 'navy'
+    const winnerFaction = result === 'heads' ? Faction.Pirates : Faction.Navy
     console.log('[CoinFlip] Starting faction:', winnerFaction)
 
     // Set the starting faction (only second player can call this)
@@ -575,7 +576,7 @@ export default function Board() {
         <div className={styles.modal}>
           <div className={styles.modalContent}>
             <h2>Who Goes First?</h2>
-            {currentPlayer?.faction === 'navy' ? (
+            {currentPlayer?.faction === Faction.Navy ? (
               <>
                 {!coinFlipping ? (
                   <>
