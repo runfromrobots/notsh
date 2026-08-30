@@ -54,17 +54,10 @@ export async function POST(
     const newDayNumber = nextTurnInDay >= 12 ? game.dayNumber + 1 : game.dayNumber
     const newTurnInDay = nextTurnInDay >= 12 ? 0 : nextTurnInDay
 
-    // Reset steps for both players when advancing turn
+    // Increment turns for current player (steps tracking will be added after migration)
     await updatePlayer(gameId, currentPlayer.id, {
-      stepsUsedThisTurn: 0,
       turnsUsedToday: currentPlayer.turnsUsedToday + 1,
     })
-
-    if (otherPlayer) {
-      await updatePlayer(gameId, otherPlayer.id, {
-        stepsUsedThisTurn: 0,
-      })
-    }
 
     // Update game state
     await updateGame(gameId, {

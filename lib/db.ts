@@ -115,7 +115,7 @@ export async function createPlayer(gameId: string, player: Player): Promise<Play
           status: player.status,
           last_move_time: player.lastMoveTime,
           turns_used_today: player.turnsUsedToday,
-          steps_used_this_turn: player.stepsUsedThisTurn,
+          // steps_used_this_turn will be set by database DEFAULT after migration
         },
       ])
       .select()

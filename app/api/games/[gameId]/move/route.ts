@@ -70,19 +70,19 @@ export async function POST(
       )
     }
 
-    // Check if player has steps remaining this turn
-    if (player.stepsUsedThisTurn >= 12) {
+    // Check if player has steps remaining this turn (default to 0 if column doesn't exist yet)
+    const stepsUsed = player.stepsUsedThisTurn || 0
+    if (stepsUsed >= 12) {
       return NextResponse.json(
         { success: false, error: 'No steps remaining this turn' },
         { status: 400 }
       )
     }
 
-    // Update player position and increment steps
+    // Update player position (don't pass stepsUsedThisTurn yet as column may not exist)
     await updatePlayer(gameId, playerId, {
       x: targetX,
       y: targetY,
-      stepsUsedThisTurn: player.stepsUsedThisTurn + 1,
       lastMoveTime: Date.now(),
     })
 
@@ -119,8 +119,8 @@ export async function POST(
     return NextResponse.json({
       success: true,
       message: 'Move successful',
-      stepsUsedThisTurn: player.stepsUsedThisTurn + 1,
-      stepsRemaining: 12 - (player.stepsUsedThisTurn + 1),
+      stepsUsedThisTurn: stepsUsed + 1,
+      stepsRemaining: 12 - (stepsUsed + 1),
       revealedTiles: tilesToReveal.length,
     })
   } catch (error) {
