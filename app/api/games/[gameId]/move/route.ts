@@ -70,11 +70,20 @@ export async function POST(
       )
     }
 
-    // Update player position
+    // Check if player has steps remaining this turn
+    if (player.stepsUsedThisTurn >= 12) {
+      return NextResponse.json(
+        { success: false, error: 'No steps remaining this turn' },
+        { status: 400 }
+      )
+    }
+
+    // Update player position and increment steps
     await updatePlayer(gameId, playerId, {
       x: targetX,
       y: targetY,
-      turnsUsedToday: player.turnsUsedToday + 1,
+      stepsUsedThisTurn: player.stepsUsedThisTurn + 1,
+      lastMoveTime: Date.now(),
     })
 
     // Generate map to know which tiles are revealed (for UI, not stored in DB)
@@ -102,30 +111,16 @@ export async function POST(
       timestamp: Date.now(),
     })
 
-    // Advance to next player's turn
-    const nextFaction = player.faction === Faction.Pirates ? Faction.Navy : Faction.Pirates
-    const nextTurnInDay = game.currentTurnInDay + 1
-
-    // Check if day is over
-    const newDayNumber = nextTurnInDay >= 12 ? game.dayNumber + 1 : game.dayNumber
-    const newTurnInDay = nextTurnInDay >= 12 ? 0 : nextTurnInDay
-
     // Lock game on first move if not already locked
-    const gameUpdates: any = {
-      currentPlayerFaction: nextFaction,
-      dayNumber: newDayNumber,
-      currentTurnInDay: newTurnInDay,
-      isLocked: true,
+    if (!game.isLocked) {
+      await updateGame(gameId, { isLocked: true })
     }
-
-    await updateGame(gameId, gameUpdates)
 
     return NextResponse.json({
       success: true,
       message: 'Move successful',
-      nextPlayer: nextFaction,
-      dayNumber: newDayNumber,
-      turnInDay: newTurnInDay,
+      stepsUsedThisTurn: player.stepsUsedThisTurn + 1,
+      stepsRemaining: 12 - (player.stepsUsedThisTurn + 1),
       revealedTiles: tilesToReveal.length,
     })
   } catch (error) {

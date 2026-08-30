@@ -24,6 +24,7 @@ interface Player {
   logsPlaced: number
   status: string
   turnsUsedToday: number
+  stepsUsedThisTurn: number
 }
 
 interface Game {
@@ -345,6 +346,29 @@ export default function Board() {
     }
   }
 
+  const handleEndTurn = async () => {
+    if (!currentPlayer) return
+
+    try {
+      const res = await fetch(`/api/games/${gameId}/end-turn`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId: currentPlayer.id }),
+      })
+
+      if (res.ok) {
+        setSelectedAction(null)
+        fetchGameState()
+      } else {
+        const error = await res.json()
+        alert(`Failed to end turn: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('End turn error:', error)
+      alert('Failed to end turn')
+    }
+  }
+
   const handleCoinFlip = async (choice: 'heads' | 'tails') => {
     console.log('[CoinFlip] User chose:', choice)
     setCoinFlipping(true)
@@ -361,12 +385,15 @@ export default function Board() {
     const winnerFaction = result === 'heads' ? 'pirates' : 'navy'
     console.log('[CoinFlip] Starting faction:', winnerFaction)
 
-    // Set the starting faction
+    // Set the starting faction (only second player can call this)
     try {
       const flipRes = await fetch(`/api/games/${gameId}/coin-flip`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ startingFaction: winnerFaction }),
+        body: JSON.stringify({
+          playerId: currentPlayer?.id,
+          startingFaction: winnerFaction
+        }),
       })
       const flipData = await flipRes.json()
       console.log('[CoinFlip] Endpoint response:', flipData)
@@ -433,6 +460,13 @@ export default function Board() {
             <p className={styles.stats}>
               Logs Placed: {currentPlayer?.logsPlaced}/{game?.sosPositions?.length || 0}
             </p>
+            {isYourTurn && (
+              <p className={styles.stepCounter}>
+                Steps: {currentPlayer?.stepsUsedThisTurn}/12
+                <br />
+                Remaining: {Math.max(0, 12 - (currentPlayer?.stepsUsedThisTurn || 0))}
+              </p>
+            )}
             {currentPlayer?.carrying && (
               <p className={styles.carrying}>📦 Carrying Log</p>
             )}
@@ -502,6 +536,12 @@ export default function Board() {
                   Place Log
                 </button>
               )}
+              <button
+                onClick={handleEndTurn}
+                className={`${styles.actionBtn} ${styles.endTurnBtn}`}
+              >
+                End Turn
+              </button>
             </div>
           )}
 
@@ -530,41 +570,46 @@ export default function Board() {
         <div className={styles.modal}>
           <div className={styles.modalContent}>
             <h2>Who Goes First?</h2>
-            {!coinFlipping ? (
+            {currentPlayer?.faction === 'navy' ? (
               <>
-                <p>Call the coin flip!</p>
-                <div className={styles.coinFlipButtons}>
-                  <button
-                    onClick={() => handleCoinFlip('heads')}
-                    className={styles.coinBtn}
-                  >
-                    🪙 Heads
-                  </button>
-                  <button
-                    onClick={() => handleCoinFlip('tails')}
-                    className={styles.coinBtn}
-                  >
-                    🪙 Tails
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className={styles.coinAnimation}>🪙</div>
-                {coinResult && (
+                {!coinFlipping ? (
                   <>
-                    <p className={styles.coinResultText}>
-                      The coin landed on <strong>{coinResult.toUpperCase()}</strong>!
-                    </p>
-                    <p className={styles.coinWinner}>
-                      {(currentPlayer?.faction === 'pirates' && coinResult === 'heads') ||
-                       (currentPlayer?.faction === 'navy' && coinResult === 'tails')
-                        ? '✨ You go first! ✨'
-                        : '⏳ Opponent goes first'}
-                    </p>
+                    <p>Call the coin flip!</p>
+                    <div className={styles.coinFlipButtons}>
+                      <button
+                        onClick={() => handleCoinFlip('heads')}
+                        className={styles.coinBtn}
+                      >
+                        🪙 Heads
+                      </button>
+                      <button
+                        onClick={() => handleCoinFlip('tails')}
+                        className={styles.coinBtn}
+                      >
+                        🪙 Tails
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.coinAnimation}>🪙</div>
+                    {coinResult && (
+                      <>
+                        <p className={styles.coinResultText}>
+                          The coin landed on <strong>{coinResult.toUpperCase()}</strong>!
+                        </p>
+                        <p className={styles.coinWinner}>
+                          {coinResult === 'heads'
+                            ? '✨ Pirates go first! ✨'
+                            : '✨ Navy goes first! ✨'}
+                        </p>
+                      </>
+                    )}
                   </>
                 )}
               </>
+            ) : (
+              <p>{opponent?.name || 'Opponent'} is calling the coin flip...</p>
             )}
           </div>
         </div>

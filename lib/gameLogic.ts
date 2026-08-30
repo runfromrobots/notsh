@@ -31,6 +31,7 @@ export function initializePlayer(playerId: string, name: string, faction: Factio
     status: 'alive',
     lastMoveTime: Date.now(),
     turnsUsedToday: 0,
+    stepsUsedThisTurn: 0,
   }
 }
 

@@ -44,6 +44,7 @@ export interface Player {
   status: 'alive' | 'eliminated' | 'rescued'
   lastMoveTime: number // timestamp of last move
   turnsUsedToday: number // how many of 12 turns used this day
+  stepsUsedThisTurn: number // how many steps used in current turn (0-12)
 }
 
 // Game state types

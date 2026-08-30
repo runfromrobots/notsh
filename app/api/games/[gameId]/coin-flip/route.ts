@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getGame, updateGame } from '@/lib/db'
+import { getGame, updateGame, getPlayers } from '@/lib/db'
 import { Faction } from '@/lib/types'
 
 export async function POST(
@@ -7,8 +7,15 @@ export async function POST(
   { params }: { params: { gameId: string } }
 ) {
   try {
-    const { startingFaction } = await request.json()
+    const { playerId, startingFaction } = await request.json()
     const gameId = params.gameId
+
+    if (!playerId) {
+      return NextResponse.json(
+        { success: false, error: 'Player ID required' },
+        { status: 400 }
+      )
+    }
 
     if (!startingFaction) {
       return NextResponse.json(
@@ -34,7 +41,26 @@ export async function POST(
       )
     }
 
-    // Update game with starting faction and reset turn counter
+    // Get players - verify caller is the second player (Navy)
+    const players = await getPlayers(gameId)
+    const callingPlayer = players.find((p) => p.id === playerId)
+
+    if (!callingPlayer) {
+      return NextResponse.json(
+        { success: false, error: 'Player not found' },
+        { status: 404 }
+      )
+    }
+
+    // Only second player (Navy) can call coin flip
+    if (callingPlayer.faction !== Faction.Navy) {
+      return NextResponse.json(
+        { success: false, error: 'Only the second player can call the coin flip' },
+        { status: 400 }
+      )
+    }
+
+    // Update game with starting faction
     await updateGame(gameId, {
       currentPlayerFaction: startingFaction,
       currentTurnInDay: 0,
