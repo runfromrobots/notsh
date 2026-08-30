@@ -2,9 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { generateMap } from '@/lib/mapGenerator'
-import styles from './explore-test.module.css'
-
-export const dynamic = 'force-dynamic'
 
 interface Tile {
   x: number
@@ -30,18 +27,59 @@ const VIEWPORT_WIDTH = 20
 const VIEWPORT_HEIGHT = 15
 const MAP_SEED = 12345
 
+const containerStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '20px',
+  padding: '20px',
+  background: '#0D1117',
+  color: '#E4F6F8',
+  minHeight: '100vh',
+  fontFamily: 'monospace',
+}
+
+const headerStyle: React.CSSProperties = {
+  textAlign: 'center',
+}
+
+const h1Style: React.CSSProperties = {
+  margin: '0 0 10px 0',
+  color: '#22E5FF',
+  fontSize: '28px',
+}
+
+const gameAreaStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'center',
+  margin: '20px 0',
+}
+
+const canvasStyle: React.CSSProperties = {
+  border: '2px solid #22E5FF',
+  background: '#0D1117',
+  imageRendering: 'pixelated',
+}
+
+const controlsStyle: React.CSSProperties = {
+  textAlign: 'center',
+  fontSize: '12px',
+  lineHeight: '1.6',
+  background: 'rgba(34, 229, 255, 0.1)',
+  padding: '15px',
+  border: '1px solid #22E5FF',
+  borderRadius: '4px',
+}
+
 export default function ExploreTest() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [playerX, setPlayerX] = useState(32)
   const [playerY, setPlayerY] = useState(32)
   const [revealedTiles, setRevealedTiles] = useState<Set<string>>(new Set())
-  const [mapData, setMapData] = useState<Map<string, Tile> | null>(null)
   const [tilesList, setTilesList] = useState<Tile[]>([])
 
   // Initialize map
   useEffect(() => {
     const map = generateMap(MAP_SEED)
-    setMapData(map.tiles)
     const tiles = Array.from(map.tiles.values())
     setTilesList(tiles)
 
@@ -165,25 +203,25 @@ export default function ExploreTest() {
   }, [playerX, playerY, tilesList, revealedTiles])
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h1>Map Exploration Test</h1>
+    <div style={containerStyle}>
+      <div style={headerStyle}>
+        <h1 style={h1Style}>Map Exploration Test</h1>
         <p>Use arrow keys to move around freely</p>
-        <p className={styles.position}>
+        <p style={{ color: '#00FF00', fontWeight: 'bold' }}>
           Position: ({playerX}, {playerY}) | Revealed tiles: {revealedTiles.size}
         </p>
       </div>
 
-      <div className={styles.gameArea}>
+      <div style={gameAreaStyle}>
         <canvas
           ref={canvasRef}
           width={VIEWPORT_WIDTH * TILE_SIZE}
           height={VIEWPORT_HEIGHT * TILE_SIZE}
-          className={styles.canvas}
+          style={canvasStyle}
         />
       </div>
 
-      <div className={styles.controls}>
+      <div style={controlsStyle}>
         <p>Arrow Keys: Move</p>
         <p>Green dot = Your position</p>
         <p>Dark tiles = Unexplored</p>
