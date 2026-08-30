@@ -99,15 +99,15 @@ export default function Board() {
 
   useEffect(() => {
     // When currentPlayerFaction is set, close modal and show notification
-    if (game?.currentPlayerFaction && showCoinFlip) {
-      console.log('[CoinFlip] currentPlayerFaction is set, closing modal')
+    if (game?.currentPlayerFaction) {
+      console.log('[CoinFlip] Game has started, closing modal. currentPlayerFaction:', game.currentPlayerFaction)
       setShowCoinFlip(false)
       // Show game started notification when coin flip completes
       if (!gameStartNotified) {
         setGameStartNotified(true)
       }
     }
-  }, [game?.currentPlayerFaction, showCoinFlip, gameStartNotified])
+  }, [game?.currentPlayerFaction, gameStartNotified])
 
   useEffect(() => {
     if (canvasRef.current && (tiles?.length || 0) > 0 && currentPlayer) {
