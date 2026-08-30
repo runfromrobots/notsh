@@ -571,7 +571,7 @@ export default function Board() {
       )}
 
       {/* Coin Flip Modal */}
-      {showCoinFlip && (
+      {showCoinFlip && !game?.currentPlayerFaction && (
         <div className={styles.modal}>
           <div className={styles.modalContent}>
             <h2>Who Goes First?</h2>
@@ -621,7 +621,7 @@ export default function Board() {
       )}
 
       {/* Game Started Notification */}
-      {gameStartNotified && !showCoinFlip && (
+      {players.length === 2 && game?.currentPlayerFaction && !gameStarted && (
         <div className={styles.notification}>
           <div className={styles.notificationContent}>
             <h2>⛵ Game Started!</h2>
