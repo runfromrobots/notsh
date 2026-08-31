@@ -453,3 +453,26 @@
   background: #00BCD4;
   border-radius: 3px;
 }
+
+.debugInfo {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(255, 215, 0, 0.15);
+  border: 2px dashed #FFD700;
+  border-radius: 4px;
+  padding: 10px 15px;
+  font-size: 12px;
+  color: #FFD700;
+  font-family: 'IBM Plex Mono', monospace;
+  z-index: 100;
+}
+
+.debugContent {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.debugContent p {
+  margin: 4px 0;
+}

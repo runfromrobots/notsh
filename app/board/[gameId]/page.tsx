@@ -122,6 +122,13 @@ export default function Board() {
       // Check if it's this player's turn
       if (game.currentPlayerFaction !== currentPlayer.faction) return
 
+      // Debug mode: 'D' key toggles movement even if game hasn't started
+      if (e.key === 'd' || e.key === 'D') {
+        setGameStarted(!gameStarted)
+        console.log('[DEBUG] Toggled gameStarted to:', !gameStarted)
+        return
+      }
+
       // Check if game has been started
       if (!gameStarted) return
 
@@ -640,6 +647,16 @@ export default function Board() {
         <div className={styles.opponentTurnOverlay}>
           <div className={styles.opponentTurnContent}>
             <p>{opponent?.name || 'Opponent'}&apos;s Turn</p>
+          </div>
+        </div>
+      )}
+
+      {/* Debug Info */}
+      {isYourTurn && (
+        <div className={styles.debugInfo}>
+          <div className={styles.debugContent}>
+            <p><strong>DEBUG:</strong> Game Started: {gameStarted ? '✓ YES' : '✗ NO'}</p>
+            <p>Press <strong>D</strong> to toggle arrow key movement</p>
           </div>
         </div>
       )}
