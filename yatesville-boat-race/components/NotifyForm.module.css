@@ -1,0 +1,113 @@
+.form {
+  display: grid;
+  gap: 10px;
+}
+
+.label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.row {
+  display: flex;
+  border: 3px solid var(--ink);
+  background: var(--paper);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 17px;
+  color: var(--ink);
+}
+
+.input:focus {
+  outline: none;
+  background: #fff;
+}
+
+.row:focus-within {
+  box-shadow: 6px 6px 0 var(--yellow);
+}
+
+.button {
+  padding: 14px 22px;
+  border: 0;
+  border-left: 3px solid var(--ink);
+  background: var(--red);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button:hover {
+  background: var(--ink);
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: -6px;
+}
+
+.button:disabled {
+  cursor: progress;
+  opacity: 0.8;
+}
+
+.help,
+.error {
+  margin: 0;
+  font-size: 14px;
+}
+
+.help {
+  opacity: 0.7;
+}
+
+.error {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.done {
+  display: grid;
+  gap: 6px;
+  padding: 18px 20px;
+  border: 3px solid var(--ink);
+  background: var(--green);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.done strong {
+  font-family: var(--font-display);
+  font-size: 22px;
+}
+
+@media (max-width: 420px) {
+  .row {
+    flex-direction: column;
+  }
+
+  .button {
+    border-left: 0;
+    border-top: 3px solid var(--ink);
+  }
+}

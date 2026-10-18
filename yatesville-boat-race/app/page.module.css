@@ -1,0 +1,298 @@
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Top bar */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 3px solid var(--ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.mark {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.markCircle,
+.markSquare {
+  width: 16px;
+  height: 16px;
+}
+
+.markCircle {
+  border-radius: 50%;
+  background: var(--yellow);
+}
+
+.markSquare {
+  background: var(--blue);
+}
+
+.markTriangle {
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 16px solid var(--red);
+}
+
+/* Hero */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 56px;
+  padding: 56px 0 72px;
+  align-items: start;
+}
+
+.intro {
+  position: sticky;
+  top: 32px;
+  display: grid;
+  gap: 28px;
+}
+
+.eyebrow {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.title {
+  display: grid;
+  gap: 4px;
+  font-size: clamp(44px, 6.2vw, 80px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.titleSmall {
+  font-size: 0.42em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.titleAccent {
+  color: var(--blue);
+}
+
+.shapes {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  height: 64px;
+}
+
+.sun {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--yellow);
+}
+
+.sail {
+  width: 0;
+  height: 0;
+  border-left: 32px solid transparent;
+  border-right: 32px solid transparent;
+  border-bottom: 64px solid var(--red);
+}
+
+.wave {
+  flex: 1;
+  height: 20px;
+  background: var(--blue);
+  border-radius: 10px 10px 0 0;
+}
+
+.lede {
+  max-width: 34em;
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+.notify {
+  max-width: 520px;
+}
+
+.mapWrap {
+  min-width: 0;
+}
+
+/* Section titles */
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding-bottom: 14px;
+  border-bottom: 3px solid var(--ink);
+}
+
+/* How it works */
+.steps {
+  padding-bottom: 72px;
+}
+
+.stepList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.step {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 32px 28px 36px 0;
+}
+
+.step + .step {
+  padding-left: 28px;
+  border-left: 3px solid var(--ink);
+}
+
+.stepShape {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 10px;
+}
+
+.circle {
+  border-radius: 50%;
+  background: var(--yellow);
+}
+
+.triangle {
+  width: 0;
+  height: 0;
+  border-left: 28px solid transparent;
+  border-right: 28px solid transparent;
+  border-bottom: 56px solid var(--red);
+}
+
+.square {
+  background: var(--blue);
+}
+
+.stepNumber {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  opacity: 0.6;
+}
+
+.stepTitle {
+  font-size: 34px;
+  font-weight: 700;
+}
+
+/* Details */
+.details {
+  padding-bottom: 72px;
+}
+
+.detailList {
+  margin: 0;
+}
+
+.detailRow {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(27, 27, 27, 0.25);
+}
+
+.detailRow dt {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.detailRow dd {
+  margin: 0;
+  font-size: 19px;
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 24px 0 40px;
+  border-top: 3px solid var(--ink);
+  font-size: 14px;
+}
+
+.footer span:first-child {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+/* Tablet and down: stack the hero */
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+    padding: 40px 0 56px;
+  }
+
+  .intro {
+    position: static;
+  }
+
+  .stepList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .step,
+  .step + .step {
+    padding: 28px 0;
+    border-left: 0;
+  }
+
+  .step + .step {
+    border-top: 1px solid rgba(27, 27, 27, 0.25);
+  }
+}
+
+@media (max-width: 560px) {
+  .main {
+    padding: 0 16px;
+  }
+
+  .topbar {
+    font-size: 12px;
+  }
+
+  .lede {
+    font-size: 18px;
+  }
+
+  .detailRow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+}

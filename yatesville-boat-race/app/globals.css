@@ -1,0 +1,49 @@
+:root {
+  --paper: #f5f1e6;
+  --ink: #1b1b1b;
+  --red: #e0452b;
+  --yellow: #f2c230;
+  --blue: #2f5fd0;
+  --sky: #bcd4f2;
+  --green: #b5d99c;
+  --pink: #f4bfc8;
+
+  --font-display: var(--font-jost), 'Futura', 'Century Gothic', system-ui, sans-serif;
+  --font-body: var(--font-jost), system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  line-height: 1.05;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+::selection {
+  background: var(--yellow);
+}

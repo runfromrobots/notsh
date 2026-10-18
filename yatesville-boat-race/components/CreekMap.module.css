@@ -1,0 +1,188 @@
+.figure {
+  margin: 0;
+}
+
+.map {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 3px solid var(--ink);
+  background: var(--paper);
+}
+
+.rail {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+  opacity: 0.35;
+}
+
+.highway {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 5;
+  opacity: 0.18;
+}
+
+.road {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3;
+  opacity: 0.25;
+}
+
+.minorRoad {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  opacity: 0.25;
+}
+
+.river {
+  fill: var(--sky);
+}
+
+.tributary {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 2;
+  opacity: 0.5;
+}
+
+.creekFaint {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 3;
+  stroke-dasharray: 2 7;
+  stroke-linecap: round;
+  opacity: 0.6;
+}
+
+.creekLower {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.creekRace {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Little ripples drifting downstream */
+.creekShimmer {
+  fill: none;
+  stroke: var(--paper);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 3 22;
+  animation: flow 2.4s linear infinite;
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -25;
+  }
+}
+
+.label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: 0.01em;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: var(--paper);
+  stroke-width: 6px;
+  stroke-linejoin: round;
+}
+
+.sublabel {
+  font-family: var(--font-display);
+  font-size: 21px;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: var(--paper);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+
+.roadLabel {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  fill: var(--ink);
+  opacity: 0.45;
+}
+
+.riverLabel {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  fill: var(--blue);
+}
+
+.question {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 34px;
+  fill: var(--paper);
+}
+
+.mystery {
+  animation: bob 3s ease-in-out infinite;
+}
+
+@keyframes bob {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.compassLetter {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  fill: var(--ink);
+}
+
+.compassSmall {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  fill: var(--ink);
+  opacity: 0.6;
+}
+
+.caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-top: 10px;
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+.caption a {
+  color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .creekShimmer,
+  .mystery {
+    animation: none;
+  }
+
+  .boat {
+    display: none;
+  }
+}
