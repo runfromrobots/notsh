@@ -99,10 +99,9 @@ export default function Board() {
   useEffect(() => {
     // When currentPlayerFaction is set, start game
     if (game?.currentPlayerFaction) {
-      console.log('[CoinFlip] currentPlayerFaction is set, starting game')
-      if (showCoinFlip) {
-        setShowCoinFlip(false)
-      }
+      console.log('[CoinFlip] currentPlayerFaction is set:', game.currentPlayerFaction)
+      console.log('[CoinFlip] Setting gameStarted=true and closing modal')
+      setShowCoinFlip(false)
       setGameStarted(true)
       // Show game started notification when coin flip completes
       if (!gameStartNotified) {
@@ -166,6 +165,7 @@ export default function Board() {
       const res = await fetch(`/api/games?id=${gameId}`)
       if (res.ok) {
         const data = await res.json()
+        console.log('[GameState] Raw response:', data)
         console.log('[GameState] Fetched:', {
           players: data.players?.length || 0,
           currentPlayerFaction: data.game?.currentPlayerFaction,
@@ -408,7 +408,9 @@ export default function Board() {
 
       // Fetch updated game state - the useEffect will detect currentPlayerFaction and close modal
       await new Promise((resolve) => setTimeout(resolve, 1500))
-      fetchGameState()
+      console.log('[CoinFlip] Calling fetchGameState after coin flip...')
+      await fetchGameState()
+      console.log('[CoinFlip] fetchGameState completed')
     } catch (error) {
       console.error('[CoinFlip] Error:', error)
       alert('Failed to set starting player')
