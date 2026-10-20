@@ -97,10 +97,11 @@ export default function Board() {
   }, [players.length, game?.currentPlayerFaction])
 
   useEffect(() => {
-    // When currentPlayerFaction is set, close modal and show notification
+    // When currentPlayerFaction is set, close modal, start game, and show notification
     if (game?.currentPlayerFaction && showCoinFlip) {
-      console.log('[CoinFlip] currentPlayerFaction is set, closing modal')
+      console.log('[CoinFlip] currentPlayerFaction is set, closing modal and starting game')
       setShowCoinFlip(false)
+      setGameStarted(true)
       // Show game started notification when coin flip completes
       if (!gameStartNotified) {
         setGameStartNotified(true)
@@ -513,17 +514,6 @@ export default function Board() {
               ▼
             </button>
           </div>
-
-          {isYourTurn && !gameStarted && (
-            <div className={styles.actions}>
-              <button
-                onClick={() => setGameStarted(true)}
-                className={`${styles.actionBtn} ${styles.beginBtn}`}
-              >
-                Begin Game
-              </button>
-            </div>
-          )}
 
           {isYourTurn && gameStarted && (
             <div className={styles.actions}>
