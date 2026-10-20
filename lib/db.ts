@@ -11,6 +11,24 @@ function generateGameCode(): string {
   return code
 }
 
+// Helper: Convert snake_case DB fields to camelCase TypeScript interface
+function convertGameData(dbData: any): GameState {
+  return {
+    id: dbData.id,
+    code: dbData.code,
+    status: dbData.status,
+    currentPlayerFaction: dbData.current_player_faction,
+    dayNumber: dbData.day_number,
+    currentTurnInDay: dbData.current_turn_in_day,
+    createdAt: dbData.created_at,
+    updatedAt: dbData.updated_at,
+    mapSeed: dbData.map_seed,
+    sosPositions: dbData.sos_positions || [],
+    rescuedPlayers: dbData.rescued_players || [],
+    isLocked: dbData.is_locked || false,
+  } as GameState
+}
+
 // Games
 export async function createGame(mapSeed: number, code?: string): Promise<GameState | null> {
   try {
@@ -33,7 +51,7 @@ export async function createGame(mapSeed: number, code?: string): Promise<GameSt
       .single()
 
     if (error) throw error
-    return data as GameState
+    return convertGameData(data)
   } catch (error) {
     console.error('Failed to create game:', error)
     return null
@@ -49,7 +67,7 @@ export async function getGame(gameId: string): Promise<GameState | null> {
       .single()
 
     if (error) throw error
-    return data as GameState
+    return convertGameData(data)
   } catch (error) {
     console.error('Failed to get game:', error)
     return null
@@ -65,7 +83,7 @@ export async function getGameByCode(code: string): Promise<GameState | null> {
       .single()
 
     if (error) throw error
-    return data as GameState
+    return convertGameData(data)
   } catch (error) {
     console.error('Failed to get game by code:', error)
     return null

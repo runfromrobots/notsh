@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getGame, updateGame, getPlayers } from '@/lib/db'
+import { getGame, updateGame } from '@/lib/db'
 import { Faction } from '@/lib/types'
 
 export async function POST(
@@ -10,29 +10,14 @@ export async function POST(
     const { playerId, startingFaction } = await request.json()
     const gameId = params.gameId
 
-    if (!playerId) {
+    if (!startingFaction || !['pirates', 'navy'].includes(startingFaction)) {
       return NextResponse.json(
-        { success: false, error: 'Player ID required' },
+        { success: false, error: 'Invalid starting faction' },
         { status: 400 }
       )
     }
 
-    if (!startingFaction) {
-      return NextResponse.json(
-        { success: false, error: 'Starting faction required' },
-        { status: 400 }
-      )
-    }
-
-    // Validate faction
-    if (startingFaction !== Faction.Pirates && startingFaction !== Faction.Navy) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid faction' },
-        { status: 400 }
-      )
-    }
-
-    // Get game
+    // Get game to verify it exists
     const game = await getGame(gameId)
     if (!game) {
       return NextResponse.json(
@@ -41,36 +26,30 @@ export async function POST(
       )
     }
 
-    // Get players - verify caller is the second player (Navy)
-    const players = await getPlayers(gameId)
-    const callingPlayer = players.find((p) => p.id === playerId)
-
-    if (!callingPlayer) {
+    // Only allow if currentPlayerFaction is not already set
+    if (game.currentPlayerFaction) {
       return NextResponse.json(
-        { success: false, error: 'Player not found' },
-        { status: 404 }
-      )
-    }
-
-    // Only second player (Navy) can call coin flip
-    if (callingPlayer.faction !== Faction.Navy) {
-      return NextResponse.json(
-        { success: false, error: 'Only the second player can call the coin flip' },
+        { success: false, error: 'Coin flip already completed' },
         { status: 400 }
       )
     }
 
-    // Update game with starting faction
-    await updateGame(gameId, {
-      currentPlayerFaction: startingFaction,
-      currentTurnInDay: 0,
-      dayNumber: 1,
+    // Update game with the starting faction
+    const success = await updateGame(gameId, {
+      currentPlayerFaction: startingFaction as Faction,
     })
+
+    if (!success) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to update game' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Coin flip result set',
       startingFaction,
+      message: `Game starting with ${startingFaction} player first`,
     })
   } catch (error) {
     console.error('Error processing coin flip:', error)
