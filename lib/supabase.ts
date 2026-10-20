@@ -10,7 +10,11 @@ if (typeof window === 'undefined') {
   if (!supabaseAnonKey) console.error('[Supabase] NEXT_PUBLIC_SUPABASE_ANON_KEY is missing')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Create client - use fallback values if not configured (for build time)
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key'
+)
 
 // Database schema functions (to be used in migrations)
 export const dbSchema = {
