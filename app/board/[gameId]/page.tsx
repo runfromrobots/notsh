@@ -97,17 +97,19 @@ export default function Board() {
   }, [players.length, game?.currentPlayerFaction])
 
   useEffect(() => {
-    // When currentPlayerFaction is set, close modal, start game, and show notification
-    if (game?.currentPlayerFaction && showCoinFlip) {
-      console.log('[CoinFlip] currentPlayerFaction is set, closing modal and starting game')
-      setShowCoinFlip(false)
+    // When currentPlayerFaction is set, start game
+    if (game?.currentPlayerFaction) {
+      console.log('[CoinFlip] currentPlayerFaction is set, starting game')
+      if (showCoinFlip) {
+        setShowCoinFlip(false)
+      }
       setGameStarted(true)
       // Show game started notification when coin flip completes
       if (!gameStartNotified) {
         setGameStartNotified(true)
       }
     }
-  }, [game?.currentPlayerFaction, showCoinFlip, gameStartNotified])
+  }, [game?.currentPlayerFaction, gameStartNotified])
 
   useEffect(() => {
     if (canvasRef.current && (tiles?.length || 0) > 0 && currentPlayer) {
