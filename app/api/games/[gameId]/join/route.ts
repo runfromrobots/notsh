@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getGame, getPlayers, createPlayer, updateGame, updatePlayer } from '@/lib/db'
+import { getGame, getPlayers, createPlayer, updateGame, updatePlayer, upsertTiles } from '@/lib/db'
 import { initializePlayer } from '@/lib/gameLogic'
 import { Faction, GameStatus } from '@/lib/types'
-import { generateMap } from '@/lib/mapGenerator'
+import { generateMap, getTile } from '@/lib/mapGenerator'
 
 export async function POST(
   request: NextRequest,
@@ -80,6 +80,23 @@ export async function POST(
             x: spawn.x,
             y: spawn.y,
           })
+
+          // Reveal tiles around player 2's spawn location
+          const tilesToReveal = []
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              const tile = getTile(mapData, spawn.x + dx, spawn.y + dy)
+              if (tile) {
+                tilesToReveal.push({
+                  ...tile,
+                  isRevealed: true,
+                })
+              }
+            }
+          }
+          if (tilesToReveal.length > 0) {
+            await upsertTiles(gameId, tilesToReveal)
+          }
         }
       }
 

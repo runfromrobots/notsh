@@ -321,6 +321,17 @@ export default function Board() {
 
       if (res.ok) {
         setSelectedAction(null)
+
+        // Reveal tiles around the new position
+        await fetch(`/api/games/${gameId}/reveal-tiles`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            playerX: targetX,
+            playerY: targetY,
+          }),
+        }).catch(err => console.error('Failed to reveal tiles:', err))
+
         fetchGameState()
       } else {
         const error = await res.json()

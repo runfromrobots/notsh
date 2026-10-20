@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateMap } from '@/lib/mapGenerator'
-import { createGame, getGame, createPlayer, updateGame, updatePlayer, getPlayers } from '@/lib/db'
+import { generateMap, getTile } from '@/lib/mapGenerator'
+import { createGame, getGame, createPlayer, updateGame, updatePlayer, getPlayers, getTiles, upsertTiles } from '@/lib/db'
 import { initializePlayer } from '@/lib/gameLogic'
 import { Faction, GameStatus } from '@/lib/types'
 
@@ -57,6 +57,23 @@ export async function POST(request: NextRequest) {
           x: spawn.x,
           y: spawn.y,
         })
+
+        // Reveal tiles around player 1's spawn location
+        const tilesToReveal = []
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            const tile = getTile(mapData, spawn.x + dx, spawn.y + dy)
+            if (tile) {
+              tilesToReveal.push({
+                ...tile,
+                isRevealed: true,
+              })
+            }
+          }
+        }
+        if (tilesToReveal.length > 0) {
+          await upsertTiles(game.id, tilesToReveal)
+        }
       }
     }
 
@@ -107,9 +124,20 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Regenerate map from seed instead of fetching from DB
+    // Regenerate map from seed
     const mapData = generateMap(game.mapSeed)
-    const tiles = Array.from(mapData.tiles.values())
+    const generatedTiles = Array.from(mapData.tiles.values())
+
+    // Get revealed status from database
+    const dbTiles = await getTiles(game.id)
+    const revealedMap = new Map(dbTiles.map(t => [`${t.x},${t.y}`, t.isRevealed]))
+
+    // Merge: keep generated map data but use database revealed status
+    const tiles = generatedTiles.map(tile => ({
+      ...tile,
+      isRevealed: revealedMap.get(`${tile.x},${tile.y}`) || false,
+    }))
+
     const players = await getPlayers(game.id)
 
     return NextResponse.json({
