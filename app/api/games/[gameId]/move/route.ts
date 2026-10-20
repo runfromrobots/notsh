@@ -79,12 +79,34 @@ export async function POST(
       )
     }
 
-    // Update player position (don't pass stepsUsedThisTurn yet as column may not exist)
+    const newStepsUsed = stepsUsed + 1
+    const turnsOutOfSteps = newStepsUsed >= 12
+
+    // Update player position and steps
     await updatePlayer(gameId, playerId, {
       x: targetX,
       y: targetY,
+      stepsUsedThisTurn: newStepsUsed,
       lastMoveTime: Date.now(),
     })
+
+    // If player has used all 12 steps, auto-end turn
+    if (turnsOutOfSteps) {
+      const otherFaction = player.faction === Faction.Pirates ? Faction.Navy : Faction.Pirates
+      const otherPlayer = players.find((p) => p.id !== playerId)
+
+      // Reset steps for next player's turn
+      if (otherPlayer) {
+        await updatePlayer(gameId, otherPlayer.id, {
+          stepsUsedThisTurn: 0,
+        })
+      }
+
+      await updateGame(gameId, {
+        currentPlayerFaction: otherFaction,
+        currentTurnInDay: game.currentTurnInDay + 1,
+      })
+    }
 
     // Generate map to know which tiles are revealed (for UI, not stored in DB)
     const mapData = generateMap(game.mapSeed)
@@ -118,9 +140,10 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: 'Move successful',
-      stepsUsedThisTurn: stepsUsed + 1,
-      stepsRemaining: 12 - (stepsUsed + 1),
+      message: turnsOutOfSteps ? 'Move successful - turn ended (12 steps used)' : 'Move successful',
+      stepsUsedThisTurn: newStepsUsed,
+      stepsRemaining: 12 - newStepsUsed,
+      turnEnded: turnsOutOfSteps,
       revealedTiles: tilesToReveal.length,
     })
   } catch (error) {
