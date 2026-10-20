@@ -60,7 +60,7 @@ export async function POST(
       )
     }
 
-    // If this is the second player, spawn them on map and start the game
+    // If this is the second player, spawn them on map
     if (players.length === 1) {
       const mapData = generateMap(game.mapSeed)
       const tilesArray = Array.from(mapData.tiles.values())
@@ -83,11 +83,9 @@ export async function POST(
         }
       }
 
-      // Second player joined - start the game with random first player
-      const randomFirstFaction = Math.random() < 0.5 ? Faction.Pirates : Faction.Navy
+      // Second player joined - game is ready but currentPlayerFaction will be set by coin flip
       await updateGame(gameId, {
         status: GameStatus.Active,
-        currentPlayerFaction: randomFirstFaction,
       })
     }
 
