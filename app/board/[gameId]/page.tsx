@@ -404,9 +404,8 @@ export default function Board() {
       const flipData = await flipRes.json()
       console.log('[CoinFlip] Endpoint response:', flipData)
 
-      // Wait a bit for dramatic effect, then close modal and fetch updated state
+      // Fetch updated game state - the useEffect will detect currentPlayerFaction and close modal
       await new Promise((resolve) => setTimeout(resolve, 1500))
-      setShowCoinFlip(false)
       fetchGameState()
     } catch (error) {
       console.error('[CoinFlip] Error:', error)
