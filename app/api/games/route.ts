@@ -130,13 +130,20 @@ export async function GET(request: NextRequest) {
 
     // Get revealed status from database
     const dbTiles = await getTiles(game.id)
+    console.log('[GET /api/games] DB tiles count:', dbTiles.length)
+    console.log('[GET /api/games] First few DB tiles:', dbTiles.slice(0, 3).map(t => ({ x: t.x, y: t.y, isRevealed: t.isRevealed })))
+
     const revealedMap = new Map(dbTiles.map(t => [`${t.x},${t.y}`, t.isRevealed]))
+    console.log('[GET /api/games] Revealed map size:', revealedMap.size)
 
     // Merge: keep generated map data but use database revealed status
     const tiles = generatedTiles.map(tile => ({
       ...tile,
       isRevealed: revealedMap.get(`${tile.x},${tile.y}`) || false,
     }))
+
+    const revealedCount = tiles.filter(t => t.isRevealed).length
+    console.log('[GET /api/games] Final tiles - Total:', tiles.length, 'Revealed:', revealedCount)
 
     const players = await getPlayers(game.id)
 

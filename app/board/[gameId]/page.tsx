@@ -46,7 +46,7 @@ const TILE_COLORS: Record<string, string> = {
   shore: '#7a8fa3',
 }
 
-const TILE_SIZE = 20
+const TILE_SIZE = 60
 const VIEWPORT_WIDTH = 20
 const VIEWPORT_HEIGHT = 15
 
@@ -503,6 +503,7 @@ export default function Board() {
             height={VIEWPORT_HEIGHT * TILE_SIZE}
             onClick={handleCanvasClick}
             className={styles.canvas}
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
           {selectedAction && (
             <p className={styles.hint}>
