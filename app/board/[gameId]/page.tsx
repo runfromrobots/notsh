@@ -477,6 +477,84 @@ export default function Board() {
     )
   }
 
+  // Show waiting screen if only 1 player has joined
+  if (players.length === 1) {
+    const inviteUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/join/${gameId}`
+      : ''
+
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <div className={styles.gameInfo}>
+            <h1>SOS - Waiting for Opponent</h1>
+            <p className={styles.gameCode}>Game Code: {game?.code}</p>
+          </div>
+        </div>
+
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flex: 1,
+          padding: '2rem',
+        }}>
+          <div style={{
+            background: '#1a1a2e',
+            border: '2px solid #00BCD4',
+            borderRadius: '8px',
+            padding: '2rem',
+            textAlign: 'center',
+            maxWidth: '500px',
+          }}>
+            <h2 style={{ color: '#FFD700', margin: '0 0 1rem 0' }}>Share This Link</h2>
+
+            <div style={{
+              background: '#0D1117',
+              border: '1px solid #00BCD4',
+              padding: '1rem',
+              borderRadius: '4px',
+              marginBottom: '1rem',
+              wordBreak: 'break-all',
+            }}>
+              <code style={{ color: '#00BCD4', fontSize: '0.9rem' }}>
+                {inviteUrl}
+              </code>
+            </div>
+
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(inviteUrl)
+                alert('Link copied to clipboard!')
+              }}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: '#FF1744',
+                color: '#FFFFFF',
+                border: '2px solid #FFD700',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                marginBottom: '1rem',
+              }}
+            >
+              Copy Invite Link
+            </button>
+
+            <p style={{ color: '#FFFFFF', margin: '1rem 0 0 0' }}>
+              Or share the code: <strong style={{ color: '#FFD700' }}>{game?.code}</strong>
+            </p>
+
+            <p style={{ color: '#00BCD4', fontSize: '0.9rem', margin: '1rem 0 0 0' }}>
+              Waiting for opponent to join...
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const isYourTurn = currentPlayer && game?.currentPlayerFaction === currentPlayer.faction
   const opponent = players.find((p) => p.id !== currentPlayer?.id)
   const turnDisplay = isYourTurn ? 'Your Turn' : (opponent?.name ? `${opponent.name}'s Turn` : 'Waiting for opponent...')
