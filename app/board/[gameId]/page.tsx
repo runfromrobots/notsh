@@ -82,11 +82,25 @@ export default function Board() {
   }, [gameId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    console.log('[Init] PlayerName loaded:', playerName)
     if (playerName && players.length > 0) {
       const current = players.find((p: Player) => p.name === playerName) || null
+      console.log('[CurrentPlayer] Looking for:', playerName)
+      console.log('[CurrentPlayer] Players available:', players.map((p: Player) => p.name))
+      console.log('[CurrentPlayer] Found:', current?.name, current?.faction)
       setCurrentPlayer(current)
     }
   }, [playerName, players])
+
+  useEffect(() => {
+    console.log('[GameState] Status:', {
+      gameStarted,
+      gameId,
+      currentPlayerFaction: game?.currentPlayerFaction,
+      playerFaction: currentPlayer?.faction,
+      isYourTurn: game?.currentPlayerFaction === currentPlayer?.faction,
+    })
+  }, [gameStarted, game?.currentPlayerFaction, currentPlayer?.faction])
 
   useEffect(() => {
     // Show coin flip if both players joined but currentPlayerFaction is not set yet
@@ -118,31 +132,50 @@ export default function Board() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!currentPlayer || !game) return
+      if (!currentPlayer || !game) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+          console.log('[KeyDown] Blocked - currentPlayer:', !!currentPlayer, 'game:', !!game)
+        }
+        return
+      }
 
       // Check if it's this player's turn
-      if (game.currentPlayerFaction !== currentPlayer.faction) return
+      if (game.currentPlayerFaction !== currentPlayer.faction) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+          console.log('[KeyDown] Not your turn - your faction:', currentPlayer.faction, 'current:', game.currentPlayerFaction)
+        }
+        return
+      }
 
       // Check if game has been started
-      if (!gameStarted) return
+      if (!gameStarted) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+          console.log('[KeyDown] Game not started')
+        }
+        return
+      }
 
       let targetX = currentPlayer.x
       let targetY = currentPlayer.y
 
       switch (e.key) {
         case 'ArrowUp':
+          console.log('[KeyDown] ArrowUp pressed')
           targetY = Math.max(0, currentPlayer.y - 1)
           e.preventDefault()
           break
         case 'ArrowDown':
+          console.log('[KeyDown] ArrowDown pressed')
           targetY = Math.min(63, currentPlayer.y + 1)
           e.preventDefault()
           break
         case 'ArrowLeft':
+          console.log('[KeyDown] ArrowLeft pressed')
           targetX = Math.max(0, currentPlayer.x - 1)
           e.preventDefault()
           break
         case 'ArrowRight':
+          console.log('[KeyDown] ArrowRight pressed')
           targetX = Math.min(63, currentPlayer.x + 1)
           e.preventDefault()
           break
@@ -189,7 +222,10 @@ export default function Board() {
 
   const renderMap = () => {
     const canvas = canvasRef.current
-    if (!canvas || !currentPlayer) return
+    if (!canvas || !currentPlayer) {
+      console.log('[RenderMap] Skipped - canvas:', !!canvas, 'currentPlayer:', !!currentPlayer)
+      return
+    }
 
     const ctx = canvas.getContext('2d')
     if (!ctx) return
@@ -198,6 +234,11 @@ export default function Board() {
     const centerY = currentPlayer.y
     const startX = Math.max(0, centerX - Math.floor(VIEWPORT_WIDTH / 2))
     const startY = Math.max(0, centerY - Math.floor(VIEWPORT_HEIGHT / 2))
+
+    // Log tile reveal status
+    const revealedCount = tiles.filter(t => t.isRevealed).length
+    const unrevealdCount = tiles.filter(t => !t.isRevealed).length
+    console.log('[RenderMap] Tiles - Total:', tiles.length, 'Revealed:', revealedCount, 'Unrevealed:', unrevealdCount)
 
     ctx.fillStyle = '#0D1117'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
